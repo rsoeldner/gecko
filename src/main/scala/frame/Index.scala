@@ -16,6 +16,7 @@ class Index[T: ClassTag](size: Int) {
     }
     Right(())
   }
+  def at(idx: Int): T = raw(idx)
 
   def contains(key: T): Option[Int] = {
     var n = 0

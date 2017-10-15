@@ -23,7 +23,7 @@ abstract class Matrix[T: ClassTag] {
   }
 
   def index(row: Int, col: Int): Int
-  def apply(row: Int, col: Int): T
+  def at(row: Int, col: Int): T
   
 
   def toRawString: String = underlaying.mkString("Raw[", ",", "]")
@@ -32,18 +32,20 @@ abstract class Matrix[T: ClassTag] {
     val string = new StringBuilder
     var r=0
     var c=0
-
+    string.append(s"Matrix[$rows x $cols] =")
     while(r < rows) {
       c = 0
-      if(r > 0) string.append('\n')
+      string.append('\n')
 
       while(c < cols) {
         if(c > 0) string.append(", ")
-        string.append(apply(r,c))
+        else string.append('\t')
+        string.append(at(r,c))
         c = c+1
       }
       r = r+1
     }
+    string.append('\n')
   string.toString()
   }
 
