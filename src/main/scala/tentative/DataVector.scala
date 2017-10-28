@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
     private[tentative] val underlying: Array[A]
-) {
+)(implicit emptyGecko: EmptyGecko[A]) {
 
   def apply(i: Int): A = underlying(i)
 
@@ -32,8 +32,6 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   def lastUnsafe: A
 
-
-
   //def shift(n: Int)
 
   //def shiftWithF(n: Int, transform: T => T): Vec[T] = {
@@ -50,10 +48,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
 object DataVector {
 
-  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](values: A*): DataVector[A] =
+  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko](values: A*): DataVector[A] =
     fromArray[A](values.toArray)
 
-  final def fromArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](array: Array[A]): DataVector[A] =
+  final def fromArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+      array: Array[A]
+  )(implicit emptyGecko: EmptyGecko[A]): DataVector[A] =
     new DataVector[A](array) {
       def map[B: ClassTag](f: (A) => B): DataVector[B] = fromArray(mapCopyArray[A, B](underlying, f))
 
