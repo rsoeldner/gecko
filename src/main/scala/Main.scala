@@ -19,6 +19,9 @@ object Main {
     //    print(res)
     //  }
 
+
+
+
     val frame = Frame.from(
       Array(
         Array("A", "1", "A"),
