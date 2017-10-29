@@ -24,7 +24,8 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   def drop(n: Int): DataVector[A]
 
-  def dropLast(n: Int): DataVector[A]
+  def dropLast: DataVector[A]
+  def dropLastN(n: Int): DataVector[A]
 
   def slice(begin: Int, end: Int): DataVector[A]
 
@@ -80,8 +81,11 @@ object DataVector {
       def drop(n: Int): DataVector[A] =
         fromArray(copyRange(underlying, n, underlying.length))
 
-      def dropLast(n: Int): DataVector[A] =
+      def dropLast: DataVector[A] =
         fromArray(copyRange(underlying, 0, array.length - 1))
+
+      def dropLastN(n: Int): DataVector[A] =
+        fromArray(copyRange(underlying, 0, array.length - n))
 
       def slice(begin: Int, until: Int): DataVector[A] =
         fromArray(copyRange(underlying, begin, until))
