@@ -1,5 +1,7 @@
 package gecko
 
+import cats.Eq
+
 import scala.reflect.ClassTag
 
 sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
@@ -34,7 +36,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   def lastUnsafe: A
 
-  //def shift(n: Int)
+  def shift(n: Int): DataVector[A]
 
   //def shiftWithF(n: Int, transform: T => T): Vec[T] = {
 
@@ -49,6 +51,20 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 }
 
 object DataVector {
+
+  implicit def eq[@specialized(Int, Double, Boolean, Long) A] = new Eq[DataVector[A]] {
+    override def eqv(x: DataVector[A], y: DataVector[A]) =
+      if (x.length != y.length) false
+      else {
+        var i    = 0
+        var same = true
+        while (i < x.length && same) {
+          if (x(i) != y(i)) same = false
+          i += 1
+        }
+        same
+      }
+  }
 
   def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko](values: A*): DataVector[A] =
     fromArray[A](values.toArray)
@@ -95,6 +111,33 @@ object DataVector {
           Some(underlying(underlying.length - 1))
 
       def lastUnsafe: A = underlying(underlying.length - 1)
+
+      def shift(n: Int): DataVector[A] = {
+        val len     = underlying.length
+        val new_arr = new Array[A](len)
+        var i       = 0
+        // shift backwards
+        if (n < 0) {
+          while (i < len + n) { // data part
+            new_arr(i) = underlying(i - n)
+            i += 1
+          }
+          while (i < len) { // empty part
+            new_arr(i) = emptyGecko.emptyElement
+            i += 1
+          }
+        } else if (n >= 0) {
+          while (i < n) { // empty part
+            new_arr(i) = emptyGecko.emptyElement
+            i += 1
+          }
+          while (i < len) { // data part
+            new_arr(i) = underlying(i - n)
+            i += 1
+          }
+        }
+        fromArray(new_arr)
+      }
     }
 
   def empty[@specialized(Int, Double, Boolean, Long) A: ClassTag]: DataVector[A] = fromArray(Array.empty[A])

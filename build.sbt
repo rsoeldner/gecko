@@ -12,7 +12,8 @@ resolvers += "amaizing at bintray" at "https://dl.bintray.com/amaizing/amaizing-
 libraryDependencies ++= Seq(
   "com.github.ichoran" %% "thyme"           % "0.1.2-SNAPSHOT",
   "org.typelevel"      %% "cats-core"       % catsV,
-  "io.github.amaizing" %% "amaizing-saddle" % "0.0.1"
+  "io.github.amaizing" %% "amaizing-saddle" % "0.0.1",
+  "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 )
 
 scalacOptions := Seq(
