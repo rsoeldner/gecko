@@ -1,13 +1,10 @@
+import cats.MonadError
+import cats.evidence.Is
+import tentative.taggedDataVector$$
+
 import scala.reflect.ClassTag
-import sun.misc.Unsafe
-import java.lang.reflect.Field
 
 package object tentative {
-
-//  val f: Field = classOf[Unsafe].getDeclaredField("theUnsafe")
-//  f.setAccessible(true)
-//  private [tentative] val unsafe = f.get(null).asInstanceOf[Unsafe]
-  // Consider sun misc unsafe for array alloc? :D
 
   /** One pass map
     *
@@ -131,5 +128,68 @@ package object tentative {
   }
 
   implicit final def emptyGeckerino[A]: EmptyGecko[A] = emptyGeckoAny.asInstanceOf[EmptyGecko[A]]
+
+  sealed trait TaggedDataVector {
+    type DF[A] <: Array[DataVector[A]]
+    def is[A]: Is[Array[DataVector[A]], DF[A]]
+  }
+
+  protected val taggedDataVector$$ : TaggedDataVector = new TaggedDataVector {
+    type DF[A] = Array[DataVector[A]]
+    @inline def is[A]: Is[Array[DataVector[A]], DF[A]] = Is.refl[Array[DataVector[A]]]
+  }
+
+  type DataMatrix[A] = taggedDataVector$$.DF[A]
+
+  object DataMatrix {
+    def apply[A](vectors: DataVector[A]*): Either[GeckoError, DataMatrix[A]] =
+      if (vectors.size <= 0)
+        Left(DataframeInitError("No vectors"))
+      else {
+        if (vectors.forall(_.length == vectors.head.length))
+          Right(taggedDataVector$$.is.coerce(vectors.toArray))
+        else
+          Left(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+      }
+
+    def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
+      if (vectors.size <= 0)
+        F.raiseError(DataframeInitError("No vectors"))
+      else {
+        if (vectors.forall(_.length == vectors.head.length))
+          F.pure(taggedDataVector$$.is.coerce(vectors.toArray))
+        else
+          F.raiseError(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+      }
+
+    def fromArray[A](vectors: Array[DataVector[A]]): Either[GeckoError, DataMatrix[A]] =
+      if (vectors.length > 0 && vectors.forall(_.length == vectors(0).length))
+        Right(is[A].coerce(vectors))
+      else
+        Left(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+
+    def fromArrayF[F[_], A](vectors: Array[DataVector[A]])(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
+      if (vectors.length > 0 && vectors.forall(_.length == vectors(0).length))
+        F.pure(is[A].coerce(vectors))
+      else
+        F.raiseError(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+
+    def fromSeq[A](a: Seq[DataVector[A]]): Either[GeckoError, DataMatrix[A]] = apply[A](a: _*)
+
+    def fromSeqF[F[_], A](a: Seq[DataVector[A]])(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] = liftF(a: _*)
+
+    def unsafeFromArray[A](arr: Array[DataVector[A]]): DataMatrix[A] = is[A].coerce(arr)
+
+    @inline def is[A]: Is[Array[DataVector[A]], DataMatrix[A]] =
+      taggedDataVector$$.is[A]
+  }
+
+  sealed trait GeckoError extends Exception
+
+  case class DataframeInitError(cause: String) extends GeckoError {
+    override def getMessage: String = cause
+
+    override def fillInStackTrace(): Throwable = this
+  }
 
 }

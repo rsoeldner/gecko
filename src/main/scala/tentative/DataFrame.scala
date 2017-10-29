@@ -3,10 +3,14 @@ package tentative
 import scala.reflect.ClassTag
 
 sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
-    private[tentative] val values: Array[DataVector[A]],
+    private[tentative] val values: DataMatrix[A],
     rowIx: FrameIndex[R],
     colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {
+
+  /** Return the number of rows
+    *
+    */
   def numRows: Int = rowIx.length
 
   def numCols: Int = colIx.length
@@ -61,21 +65,32 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
 }
 
 object DataFrame {
-  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](values: DataVector[A]*): DataFrame[Int, Int, A] =
-    fromArray(values.toArray)
+  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
+    if (arr.isEmpty) {
+      empty[Int, Int, A]
+    } else {
+      val rows = FrameIndex.default(arr.head.underlying.length) //todo: Fix this ugly shit
+      val cols = FrameIndex.default(arr.length)
+      build[Int, Int, A](rows, cols, arr)
+    }
+
+  def empty[R, C, A]: DataFrame[R, C, A] = ???
 
   def fromArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](
-      arr: Array[DataVector[A]]
-  ): DataFrame[Int, Int, A] = {
-    val rows = FrameIndex.default(arr.head.underlying.length) //todo: Fix this ugly shit
-    val cols = FrameIndex.default(arr.length)
-    build[Int, Int, A](rows, cols, arr)
-  }
+      arr: DataMatrix[A]
+  ): DataFrame[Int, Int, A] =
+    if (arr.isEmpty)
+      empty[Int, Int, A]
+    else {
+      val rows = FrameIndex.default(arr(0).length)
+      val cols = FrameIndex.default(arr.length)
+      build[Int, Int, A](rows, cols, arr)
+    }
 
   private final def build[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
-      values: Array[DataVector[A]]
+      values: DataMatrix[A]
   ): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
     def head(n: Int): DataFrame[R, C, A] =
       build(rowIx.slice(0, n), colIx, values)
@@ -86,7 +101,7 @@ object DataFrame {
       else {
         val newValues = copyArray(values)
         newValues(i) = newValues(i).map(f)
-        build(rowIx, colIx, newValues)
+        build(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
       }
   }
 

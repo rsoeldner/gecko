@@ -48,8 +48,9 @@ object InternalBenchmarks {
 
     val defaultVector = DataVector(1, 2, 3, 4, 5)
 
-    val largeColFrame: DataFrame[Int, Int, Int] = DataFrame.fromArray(Array.fill(1000)(defaultVector))
-    val largeColSaddle: Frame[Int, Int, Int]    = Frame(Seq.fill(1000)(Vec(1, 2, 3, 4, 5)): _*)
+    val largeColFrame: DataFrame[Int, Int, Int] =
+      DataFrame.fromArray(DataMatrix.unsafeFromArray(Array.fill(1000)(defaultVector)))
+    val largeColSaddle: Frame[Int, Int, Int] = Frame(Seq.fill(1000)(Vec(1, 2, 3, 4, 5)): _*)
 
     def iterateHead(frame: DataFrame[Int, Int, Int]): Unit = {
       (1 until frame.numRows).map(frame.head).toList
@@ -70,7 +71,8 @@ object InternalBenchmarks {
       htitle = "Saddle"
     )
 
-    val largeRowFrame  = DataFrame.fromArray(Array.fill(5)(DataVector.fromArray(Array.range(0, 1000))))
+    val largeRowFrame =
+      DataFrame(DataMatrix.unsafeFromArray(Array.fill(5)(DataVector.fromArray(Array.range(0, 1000)))))
     val largeRowSFrame = Frame(Seq.fill(5)(Vec.arrayToVec(Array.range(0, 1000))): _*)
 
     /*

@@ -8,6 +8,8 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   def apply(i: Int): A = underlying(i)
 
+  @inline def length: Int = underlying.length
+
   def map[B: ClassTag](f: A => B): DataVector[B]
 
   def flatMap[B: ClassTag](f: A => DataVector[B]): DataVector[B]
