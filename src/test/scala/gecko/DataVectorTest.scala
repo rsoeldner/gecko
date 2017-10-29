@@ -39,7 +39,7 @@ class DataVectorTest extends FlatSpec with Matchers {
   }
   it should "drop correct" in {
     val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).drop(2)
-    vec.underlying shouldBe(Array(3,4,5,6))
+    vec.underlying shouldBe(Array(3,4,5))
   }
 
 }
