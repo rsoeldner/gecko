@@ -33,4 +33,13 @@ class DataVectorTest extends FlatSpec with Matchers {
     vec.shift(-2).underlying shouldBe(Array(3,4,5,Int.MinValue, Int.MinValue))
   }
 
+  it should "append correct" in {
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)) + Array(6).toDataVector
+    vec.underlying shouldBe(Array(1,2,3,4,5,6))
+  }
+  it should "drop correct" in {
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).drop(2)
+    vec.underlying shouldBe(Array(3,4,5,6))
+  }
+
 }
