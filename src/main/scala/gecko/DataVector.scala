@@ -1,9 +1,9 @@
-package tentative
+package gecko
 
 import scala.reflect.ClassTag
 
 sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
-    private[tentative] val underlying: Array[A]
+    private[gecko] val underlying: Array[A]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
   def apply(i: Int): A = underlying(i)

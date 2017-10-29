@@ -1,10 +1,10 @@
-package tentative
+package gecko
 
 import scala.reflect.ClassTag
 
 final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag](
     underlying: Array[A],
-    private[tentative] val indexes: Array[Int]
+    private[gecko] val indexes: Array[Int]
 ) {
   @inline def length: Int = underlying.length
 

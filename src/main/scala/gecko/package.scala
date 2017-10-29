@@ -1,15 +1,14 @@
 import cats.MonadError
 import cats.evidence.Is
-import tentative.taggedDataVector$$
 
 import scala.reflect.ClassTag
 
-package object tentative {
+package object gecko {
 
   /** One pass map
     *
     */
-  @inline protected[tentative] final def mapCopyArray[
+  @inline protected[gecko] final def mapCopyArray[
       @specialized(Int, Double, Boolean, Long) A,
       @specialized(Int, Double, Boolean, Long) B: ClassTag
   ](arr: Array[A], b: A => B)(implicit empty1: EmptyGecko[A], empty2: EmptyGecko[B]): Array[B] = {
@@ -31,7 +30,7 @@ package object tentative {
   /** A linear time, 2 pass flatmap on arrays
     *
     */
-  @inline protected[tentative] final def flatMapCopy[
+  @inline protected[gecko] final def flatMapCopy[
       @specialized(Int, Double, Boolean, Long) A,
       @specialized(Int, Double, Boolean, Long) B: ClassTag
   ](arr: Array[A], f: A => Array[B])(implicit empty1: EmptyGecko[A], empty2: EmptyGecko[B]): Array[B] = {
@@ -63,7 +62,7 @@ package object tentative {
     finalArr
   }
 
-  @inline protected[tentative] final def arrayAppend[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  @inline protected[gecko] final def arrayAppend[@specialized(Int, Double, Boolean, Long) A: ClassTag](
       array1: Array[A],
       array2: Array[A]
   ): Array[A] = {
@@ -73,7 +72,7 @@ package object tentative {
     newArray
   }
 
-  @inline protected[tentative] final def copyRange[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  @inline protected[gecko] final def copyRange[@specialized(Int, Double, Boolean, Long) A: ClassTag](
       array1: Array[A],
       begin: Int,
       until: Int
@@ -84,7 +83,7 @@ package object tentative {
     newArray
   }
 
-  @inline protected[tentative] final def copyArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  @inline protected[gecko] final def copyArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](
       array1: Array[A]
   ): Array[A] = {
     val newArray = new Array[A](array1.length)

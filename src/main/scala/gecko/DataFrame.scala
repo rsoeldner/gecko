@@ -1,9 +1,9 @@
-package tentative
+package gecko
 
 import scala.reflect.ClassTag
 
 sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
-    private[tentative] val values: DataMatrix[A],
+    private[gecko] val values: DataMatrix[A],
     rowIx: FrameIndex[R],
     colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {

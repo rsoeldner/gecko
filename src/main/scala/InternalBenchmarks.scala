@@ -1,6 +1,8 @@
-package tentative
+package gecko
+
+
 import ichi.bench._
-import org.saddle.{Frame, Vec}
+import org.saddle._
 
 import scala.reflect.ClassTag
 
