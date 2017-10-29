@@ -53,17 +53,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 object DataVector {
 
   implicit def eq[@specialized(Int, Double, Boolean, Long) A] = new Eq[DataVector[A]] {
-    override def eqv(x: DataVector[A], y: DataVector[A]) =
-      if (x.length != y.length) false
-      else {
-        var i    = 0
-        var same = true
-        while (i < x.length && same) {
-          if (x(i) != y(i)) same = false
-          i += 1
-        }
-        same
-      }
+    override def eqv(x: DataVector[A], y: DataVector[A]) = x.underlying.sameElements(y.underlying)
   }
 
   def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko](values: A*): DataVector[A] =

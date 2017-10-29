@@ -10,11 +10,17 @@ class DataVectorTest extends FlatSpec with Matchers {
   it should "map correct" in {
     val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
     vec.map(_ + 10).underlying shouldBe(Array(11,12,13,14,15))
+//    assert(vec.map(_ + 10) === Array(11,12,13,14,15).toDataVector) // whoop
   }
 
   it should "flatmap correct" in {
     val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
     vec.flatMap(x => Array(x + 10).toDataVector).underlying shouldBe(Array(11,12,13,14,15))
+  }
+
+  it should "semiFlatMap correct" in {
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
+    vec.semiFlatMap(x => Array(x + 10)).underlying shouldBe(Array(11,12,13,14,15))
   }
 
   it should "shift up correct" in {
