@@ -50,11 +50,11 @@ object InternalBenchmarks {
 
     val defaultVector = DataVector(1, 2, 3, 4, 5)
 
-    val largeColFrame: DataFrame[Int, Int, Int] =
-      DataFrame.fromArray(DataMatrix.unsafeFromArray(Array.fill(1000)(defaultVector)))
+    val largeColFrame: CDataFrame[Int, Int, Int] =
+      CDataFrame.apply(DataMatrix.unsafeFromArray(Array.fill(1000)(defaultVector)))
     val largeColSaddle: Frame[Int, Int, Int] = Frame(Seq.fill(1000)(Vec(1, 2, 3, 4, 5)): _*)
 
-    def iterateHead(frame: DataFrame[Int, Int, Int]): Unit = {
+    def iterateHead(frame: CDataFrame[Int, Int, Int]): Unit = {
       (1 until frame.numRows).map(frame.head).toList
       ()
     }
@@ -68,20 +68,20 @@ object InternalBenchmarks {
       iterateHeadSaddle(largeColSaddle),
       htitle = "Saddle"
     )
-    th.pbenchOff[Any]("MapColIx for a long number of columns")(largeColFrame.mapColIx(0, _ + 30), ftitle = "Gecko")(
+    th.pbenchOff[Any]("MapColIx for a long number of columns")(largeColFrame.mapColAt(0, _ + 30), ftitle = "Gecko")(
       largeColSaddle.mapColValues(0)(_ + 30),
       htitle = "Saddle"
     )
 
     val largeRowFrame =
-      DataFrame(DataMatrix.unsafeFromArray(Array.fill(5)(DataVector.fromArray(Array.range(0, 1000)))))
+      CDataFrame(DataMatrix.unsafeFromArray(Array.fill(5)(DataVector.fromArray(Array.range(0, 1000)))))
     val largeRowSFrame = Frame(Seq.fill(5)(Vec.arrayToVec(Array.range(0, 1000))): _*)
 
     /*
     NOTE: we perform worse here, but that's due to arrays requiring a copy of all references just to replace one.
      */
     th.pbenchOff[Any]("MapColIx for a long number of rows")(
-      largeRowFrame.mapColIx(0, _ + 30),
+      largeRowFrame.mapColAt(0, _ + 30),
       ftitle = "Gecko"
     )(
       largeRowSFrame.mapColValues(0)(_ + 30),

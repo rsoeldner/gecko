@@ -5,6 +5,21 @@ import scala.reflect.ClassTag
 
 package object gecko {
 
+  /** unsafe removal of element at index.
+    * No bounds checking.
+    *
+    */
+  @inline protected[gecko] final def removeElemAt[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+      arr: Array[A],
+      i: Int
+  ): Array[A] = {
+    val newLen   = arr.length - 1
+    val newArray = new Array[A](newLen)
+    System.arraycopy(arr, 0, newArray, 0, i)
+    System.arraycopy(arr, i + 1, newArray, i, newLen - i)
+    newArray
+  }
+
   /** One pass map
     *
     */
@@ -179,6 +194,9 @@ package object gecko {
 
     def unsafeFromArray[A](arr: Array[DataVector[A]]): DataMatrix[A] = is[A].coerce(arr)
 
+    def fill[A](n: Int, elem: DataVector[A]): DataMatrix[A] =
+      is.coerce(Array.fill(n)(elem))
+
     @inline def is[A]: Is[Array[DataVector[A]], DataMatrix[A]] =
       taggedDataVector$$.is[A]
   }
@@ -189,6 +207,11 @@ package object gecko {
     override def getMessage: String = cause
 
     override def fillInStackTrace(): Throwable = this
+  }
+
+  class DataMatrixSyntax[A](val m: DataMatrix[A]) extends AnyVal {
+    def mapDM[B](f: DataVector[A] => DataVector[B]): DataMatrix[B] =
+      DataMatrix.is[B].coerce(mapCopyArray(m, f))
   }
 
 }
