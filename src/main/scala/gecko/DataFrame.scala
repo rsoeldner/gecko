@@ -1,5 +1,7 @@
 package gecko
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /** A row-stored dataframe object.
@@ -8,8 +10,8 @@ import scala.reflect.ClassTag
   */
 sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
     private[gecko] val values: DataMatrix[A],
-    rowIx: FrameIndex[R],
-    colIx: FrameIndex[C]
+    val rowIx: FrameIndex[R],
+    val colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
   def numRows: Int = rowIx.length
@@ -117,6 +119,40 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
       i += 1
     }
   }
+
+  def groupBy_(c: C): List[(A, DataFrame[Int, C, A])] = {
+    val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
+    var r = 0
+    val idx = colIx.findOne(c)
+
+    while(r < numRows) {
+      val entry =values(r)(idx)
+      book.getOrElseUpdate(entry, new ListBuffer[DataVector[A]]) += rowAtIx(r)
+
+      r += 1
+    }
+    book.mapValues{buf =>
+      val matrix = DataMatrix.unsafeFromArray(buf.result().toArray)
+      DataFrame(FrameIndex.default(matrix.length), colIx, matrix)
+    }.toList
+  }
+
+  def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
+    val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
+    dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
+      case (list, dimension) => for {
+        listMap <- list
+        elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension)
+      } yield (listMap._1.updated(dimension, elem._1), elem._2)
+    }
+  }
+
+  def ++(other: DataFrame[R,C,A]): DataFrame[R, C, A] = {
+    val newRowIx = rowIx ++ other.rowIx
+    val newValues = Array.concat(values, other.values)
+    DataFrame(newRowIx,colIx, DataMatrix.unsafeFromArray(newValues))
+  }
+
 }
 
 object DataFrame {
