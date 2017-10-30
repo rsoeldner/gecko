@@ -8,8 +8,8 @@ import scala.reflect.ClassTag
   */
 sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
     private[gecko] val values: DataMatrix[A],
-    rowIx: FrameIndex[R],
-    colIx: FrameIndex[C]
+    val rowIx: FrameIndex[R],
+    val colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
   def numRows: Int = rowIx.length
@@ -129,7 +129,8 @@ object DataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, A]: DataFrame[R, C, A] = ???
+  def empty[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag]: DataFrame[R, C, A] =
+    DataFrame(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
       rowIx: FrameIndex[R],
@@ -153,7 +154,7 @@ object DataFrame {
         val colIndex  = colIx.index(i)
         while (j < rowIx.length) {
           newValues(j) = newValues(j).replace(colIndex, f(newValues(j)(colIndex)))
-          j+=1
+          j += 1
         }
 
         apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))

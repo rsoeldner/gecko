@@ -17,6 +17,11 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   @inline def apply(i: Int): A = underlying(i)
 
+  def at(i: Int): Option[A] =
+    if (0 <= i && i < length && emptyGecko.nonEmpty(apply(i))) {
+      Some(apply(i))
+    } else None
+
   @inline def length: Int = underlying.length
 
   def map[B: ClassTag](f: A => B): DataVector[B]
@@ -167,8 +172,8 @@ object DataVector {
         }
 
       def +(other: A): DataVector[A] = {
-        val len = length
-        val newArray = new Array[A](len+1)
+        val len      = length
+        val newArray = new Array[A](len + 1)
         System.arraycopy(underlying, 0, newArray, 0, len)
         newArray(len) = other
         fromArray(newArray)
