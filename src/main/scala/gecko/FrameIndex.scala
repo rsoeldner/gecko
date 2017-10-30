@@ -6,6 +6,10 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
     underlying: Array[A],
     private[gecko] val indexes: Array[Int]
 ) {
+  @inline def apply(i: Int): A = underlying(i)
+
+  @inline def index(i: Int): Int = indexes(i)
+
   @inline def length: Int = underlying.length
 
   def slice(begin: Int, end: Int): FrameIndex[A] = {
@@ -14,12 +18,25 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
     FrameIndex(underlyingSlice, indexSlice)
   }
 
-  def find(identifier: A): List[Int] = {
-    val buffer = ListBuffer[Int]()
-    var i=0
+  /** Remove elements at index i
+    *
+    */
+  def removeIx(i: Int): FrameIndex[A] =
+    if (i < 0 || i >= underlying.length)
+      this
+    else
+      FrameIndex(removeElemAt(underlying, i), removeElemAt(indexes, i))
 
-    while(i<underlying.length) {
-      if(underlying(i) == identifier)
+  def findOne(identifier: A): Int = underlying.indexOf(identifier)
+
+  def findAll_(identifier: A): Array[Int] = indexes.filter(underlying(_) == identifier)
+
+  def findAll(identifier: A): List[Int] = {
+    val buffer = ListBuffer[Int]()
+    var i      = 0
+
+    while (i < underlying.length) {
+      if (underlying(i) == identifier)
         buffer.append(indexes(i))
       i += 1
     }

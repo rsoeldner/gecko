@@ -34,7 +34,7 @@ class DataVectorTest extends FlatSpec with Matchers {
   }
 
   it should "append correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)) + Array(6).toDataVector
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)) ++ Array(6).toDataVector
     vec.underlying shouldBe(Array(1,2,3,4,5,6))
   }
 
