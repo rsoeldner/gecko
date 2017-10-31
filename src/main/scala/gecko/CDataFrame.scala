@@ -8,8 +8,8 @@ import scala.reflect.ClassTag
   */
 sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
     private[gecko] val values: DataMatrix[A],
-    rowIx: FrameIndex[R],
-    colIx: FrameIndex[C]
+    val rowIx: FrameIndex[R],
+    val colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
   /** Return the number of rows
@@ -80,6 +80,13 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
       i += 1
     }
   }
+
+  def ++(other: CDataFrame[R, C, A]): CDataFrame[Int, C, A] = {
+    val nRows  = numRows + other.numRows
+    val matrix = Array.concat(values, other.values)
+    CDataFrame(FrameIndex.default(nRows), colIx, DataMatrix.unsafeFromArray(matrix))
+  }
+
 }
 
 object CDataFrame {
