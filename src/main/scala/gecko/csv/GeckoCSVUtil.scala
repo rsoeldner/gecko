@@ -49,27 +49,16 @@ object GeckoCSVUtil {
         .covary[F]
   }
 
-  def csvPipe[F[_]](implicit F: Effect[F]): Pipe[F, Byte, DataFrame[Int, Int, String]] = { s =>
-    val stream = s
-      .through(text.utf8Decode)
-      .through(text.lines)
-      .filter(!_.isEmpty)
-
-    Stream.eval(F.map(stream.head.flatMap { str =>
-      val csvArray = DataVector.fromArray(parseSimpleCSV(str))
-      Stream.emit(csvArray) ++ stream.tail.evalMap(parseEffectLen[F](_, csvArray.length))
-    }.runLog)(v => DataFrame.default(DataMatrix.unsafeFromArray(v.toArray))))
-  }
-
-  def parseEffectLen[F[_]](line: String, lineLen: Int, stripQuote: Boolean = true)(
-      implicit F: Effect[F]
-  ): F[DataVector[String]] = {
-    val parsed = DataVector.fromArray(parseSimpleCSV(line, stripQuote))
-    if (parsed.length != lineLen)
-      F.raiseError[DataVector[String]](InvalidCSVError("Vectors do not have an even number of columns"))
-    else
-      F.pure(parsed)
-  }
+  def parseFrame[F[_]](s: Stream[F, Byte])(implicit F: Effect[F]): F[DataFrame[Int, Int, String]] =
+    F.flatMap(
+      s.through(text.utf8Decode)
+        .through(text.lines)
+        .filter(!_.isEmpty)
+        .map(s => DataVector.fromArray(parseSimpleCSV(s)))
+        .runLog
+    ) { v =>
+      F.map(DataMatrix.fromArrayF[F, String](v.toArray))(DataFrame.default[String])
+    }
 
   def parseSimpleCSV(line: String, stripQuote: Boolean = true): Array[String] = {
     val result = ArrayBuffer[String]()

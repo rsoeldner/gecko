@@ -28,7 +28,6 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
     */
   @inline def length: Int = underlying.length
 
-
   def map[B: ClassTag](f: A => B): DataVector[B]
 
   def flatMap[B: ClassTag](f: A => DataVector[B]): DataVector[B]
@@ -156,6 +155,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
     builder.append(")")
     builder.toString
+  }
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case d: DataVector[_] =>
+      underlying.sameElements(d.underlying)
+    case _ => false
   }
 }
 
