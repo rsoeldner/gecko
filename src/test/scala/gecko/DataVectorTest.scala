@@ -1,16 +1,14 @@
 package gecko
 
-import org.scalatest.{FlatSpec, Matchers}
 import syntax._
 
-class DataVectorTest extends FlatSpec with Matchers {
+class DataVectorTest extends TestSpec {
 
   behavior of "DataVector"
 
   it should "map correct" in {
     val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
     vec.map(_ + 10).underlying shouldBe(Array(11,12,13,14,15))
-//    assert(vec.map(_ + 10) === Array(11,12,13,14,15).toDataVector) // whoop
   }
 
   it should "flatmap correct" in {

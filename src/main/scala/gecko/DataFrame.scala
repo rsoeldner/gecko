@@ -1,5 +1,7 @@
 package gecko
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /** A row-stored dataframe object.
@@ -12,12 +14,30 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     val colIx: FrameIndex[C]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
+  /** Number of Rows
+    *
+    * @return
+    */
   def numRows: Int = rowIx.length
 
+  /** Number of Columns
+    *
+    * @return
+    */
   def numCols: Int = colIx.length
 
+  /** Return selected row
+    *
+    * @param r index
+    * @return
+    */
   def row(r: R): DataVector[A]
 
+  /** return selected column
+    *
+    * @param c
+    * @return
+    */
   def col(c: C): DataVector[A]
 
   /** Return the row at a specified index
@@ -118,6 +138,56 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
       i += 1
     }
   }
+
+  /** GroupBy single column
+    *
+    * @param c Column name
+    * @return
+    */
+
+  def groupBy_(c: C): List[(A, DataFrame[Int, C, A])] = {
+    val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
+    var r = 0
+    val idx = colIx.findOne(c)
+
+    while(r < numRows) {
+      val entry =values(r)(idx)
+      book.getOrElseUpdate(entry, new ListBuffer[DataVector[A]]) += rowAtIx(r)
+
+      r += 1
+    }
+    book.mapValues{buf =>
+      val matrix = DataMatrix.unsafeFromArray(buf.result().toArray)
+      DataFrame(FrameIndex.default(matrix.length), colIx, matrix)
+    }.toList
+  }
+
+  /** GroupBy list of dimensions
+    *
+    * @param dim List of dimensions from left to right
+    * @return
+    */
+  def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
+    val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
+    dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
+      case (list, dimension) => for {
+        listMap <- list
+        elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension)
+      } yield (listMap._1.updated(dimension, elem._1), elem._2)
+    }
+  }
+
+  /** Concat two DataFrame's row-wise
+    *
+    * @param other
+    * @return
+    */
+  def ++(other: DataFrame[R,C,A]): DataFrame[R, C, A] = {
+    val newRowIx = rowIx ++ other.rowIx
+    val newValues = Array.concat(values, other.values)
+    DataFrame(newRowIx,colIx, DataMatrix.unsafeFromArray(newValues))
+  }
+
 }
 
 object DataFrame {

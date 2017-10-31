@@ -1,7 +1,7 @@
 package gecko
 
 import scala.reflect.ClassTag
-import scala.collection.mutable.ListBuffer
+
 final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag](
     underlying: Array[A],
     private[gecko] val indexes: Array[Int]
@@ -14,8 +14,15 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
 
   def slice(begin: Int, end: Int): FrameIndex[A] = {
     val underlyingSlice = copyRange(underlying, begin, end)
-    val indexSlice      = copyRange(indexes, begin, end)
+    val indexSlice = copyRange(indexes, begin, end)
     FrameIndex(underlyingSlice, indexSlice)
+  }
+
+  def ++(other: FrameIndex[A]) = {
+    val size = length + other.length
+    val ix = Array.range(0, size)
+    val values = Array.concat(underlying, other.underlying)
+    FrameIndex(values, ix)
   }
 
   /** Remove elements at index i
@@ -29,21 +36,8 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
 
   def findOne(identifier: A): Int = underlying.indexOf(identifier)
 
-  def findAll_(identifier: A): Array[Int] = indexes.filter(underlying(_) == identifier)
-
-  def findAll(identifier: A): List[Int] = {
-    val buffer = ListBuffer[Int]()
-    var i      = 0
-
-    while (i < underlying.length) {
-      if (underlying(i) == identifier)
-        buffer.append(indexes(i))
-      i += 1
-    }
-    buffer.result()
-  }
+  def findAll(identifier: A): Array[Int] = indexes.filter(underlying(_) == identifier)
 }
-
 object FrameIndex {
   def default(size: Int): FrameIndex[Int] = {
     val ix = Array.range(0, size)
