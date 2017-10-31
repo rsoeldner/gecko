@@ -17,7 +17,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   @inline def apply(i: Int): A = underlying(i)
 
+  /** Number of Elements
+    *
+    * @return
+    */
   @inline def length: Int = underlying.length
+
 
   def map[B: ClassTag](f: A => B): DataVector[B]
 
@@ -60,14 +65,34 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
     */
   def slice(begin: Int, end: Int): DataVector[A]
 
+  /** Return first Element if possible, otherwise None
+    *
+    * @return
+    */
   def head: Option[A]
 
+  /** Return unsafe first element
+    *
+    * @return
+    */
   def headUnsafe: A
 
+  /** Return all elements except the first one
+    *
+    * @return
+    */
   def tail: DataVector[A]
 
+  /** Return last element if possible, otherwise None
+    *
+    * @return
+    */
   def last: Option[A]
 
+  /** Return unsafe last element
+    *
+    * @return
+    */
   def lastUnsafe: A
 
   /** Shift N elements by shifting the elements inside of the DataVector, and filling the rest
