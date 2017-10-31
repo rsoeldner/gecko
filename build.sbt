@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "org.typelevel"      %% "cats-core"       % catsV,
   "io.github.amaizing" %% "amaizing-saddle" % "0.0.1",
   "co.fs2"             %% "fs2-core"        % "0.10.0-M7",
+  "co.fs2"             %% "fs2-io"          % "0.10.0-M7",
   "org.scalatest"      %% "scalatest"       % "3.0.4" % "test"
 )
 

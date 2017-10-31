@@ -1,8 +1,11 @@
 package gecko
 
-
+import java.nio.file.Paths
+import cats.effect.IO
+import gecko.csv.GeckoCSVUtil
 import ichi.bench._
 import org.saddle._
+import org.saddle.io._
 
 import scala.reflect.ClassTag
 
@@ -92,6 +95,17 @@ object InternalBenchmarks {
       htitle = "Saddle"
     )
 
+    val fileLocation = getClass.getResource("/full_df.csv").getPath
+
+    val readFile = fs2.io.file.readAll[IO](Paths.get(fileLocation), 4096)
+
+    th.pbenchOff[Any]("ArrayBuffer vs saddle")(
+      readFile.through(GeckoCSVUtil.csvPipe).runLast.unsafeRunSync(),
+      ftitle = "ArrayBuffer"
+    )(
+      CsvParser.parse(CsvFile(fileLocation)),
+      htitle = "Saddle"
+    )
   }
 
 }

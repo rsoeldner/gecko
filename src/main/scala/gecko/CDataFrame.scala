@@ -92,7 +92,7 @@ object CDataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag]: CDataFrame[R, C, A] =
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: CDataFrame[R, C, A] =
     apply(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](

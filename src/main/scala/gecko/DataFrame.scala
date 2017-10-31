@@ -90,6 +90,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     */
   override def toString: String = {
     val builder = new java.lang.StringBuilder()
+    builder.append(s"[$numRows x $numCols]\n")
     builder.append(s"Columns: ${colIx.underlying.mkString(" ")}\n")
     var i = 0
     if (numRows < 6) {
@@ -129,7 +130,7 @@ object DataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag]: DataFrame[R, C, A] =
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: DataFrame[R, C, A] =
     DataFrame(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
