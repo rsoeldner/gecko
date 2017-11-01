@@ -12,7 +12,8 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     private[gecko] val values: DataMatrix[A],
     val rowIx: FrameIndex[R],
     val colIx: FrameIndex[C]
-)(implicit emptyGecko: EmptyGecko[A]) {
+)(implicit emptyGecko: EmptyGecko[A],
+  emptyPrint: EmptyPrint[A]) {
 
   /** Number of Rows
     *
@@ -190,7 +191,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
 }
 
 object DataFrame {
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
@@ -205,7 +206,7 @@ object DataFrame {
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
-  ): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
+  )(implicit emptyPrint: EmptyPrint[A]): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
     def head(n: Int): DataFrame[R, C, A] =
       apply(rowIx.slice(0, n), colIx, values)
 
@@ -253,7 +254,7 @@ object DataFrame {
     }
   }
 
-  def fill[A: ClassTag: EmptyGecko](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
+  def fill[A: ClassTag: EmptyGecko: EmptyPrint](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
     default(DataMatrix.fill(n, vector))
 
 }

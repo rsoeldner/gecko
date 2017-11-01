@@ -10,7 +10,8 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
     private[gecko] val values: DataMatrix[A],
     val rowIx: FrameIndex[R],
     val colIx: FrameIndex[C]
-)(implicit emptyGecko: EmptyGecko[A]) {
+)(implicit emptyGecko: EmptyGecko[A],
+  emptyPrint: EmptyPrint[A]) {
 
   /** Return the number of rows
     *
@@ -127,7 +128,7 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
 }
 
 object CDataFrame {
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag](arr: DataMatrix[A]): CDataFrame[Int, Int, A] =
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](arr: DataMatrix[A]): CDataFrame[Int, Int, A] =
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
@@ -138,7 +139,7 @@ object CDataFrame {
 
   def empty[R, C, A]: CDataFrame[R, C, A] = ???
 
-  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       arr: DataMatrix[A]
   ): CDataFrame[Int, Int, A] =
     if (arr.isEmpty)
@@ -149,7 +150,7 @@ object CDataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
@@ -184,7 +185,7 @@ object CDataFrame {
       }
   }
 
-  def fill[A: ClassTag: EmptyGecko](n: Int, vector: DataVector[A]): CDataFrame[Int, Int, A] =
+  def fill[A: ClassTag: EmptyGecko: EmptyPrint](n: Int, vector: DataVector[A]): CDataFrame[Int, Int, A] =
     default(DataMatrix.fill(n, vector))
 
 }
