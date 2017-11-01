@@ -1,4 +1,6 @@
+import cats.effect.IO
 import gecko._
+import fs2._
 
 object TestingGround {
 
@@ -12,6 +14,5 @@ object TestingGround {
     frame.mapRowAt(1, _ => "kekistani").printPretty
 
     frame.mapColAt(1, _ => "lord").printPretty
-
   }
 }

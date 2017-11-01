@@ -162,6 +162,8 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
 
     @inline def is[A]: Is[Array[DataVector[A]], DataMatrix[A]] =
       taggedDataVector$$.is[A]
+
+    def empty[A: ClassTag]: DataMatrix[A] = is[A].coerce(Array.empty[DataVector[A]])
   }
 
   sealed trait GeckoError extends Exception

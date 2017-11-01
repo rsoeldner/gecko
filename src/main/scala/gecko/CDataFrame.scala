@@ -132,12 +132,13 @@ object CDataFrame {
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
-      val rows = FrameIndex.default(arr.head.underlying.length) //todo: Fix this ugly shit
+      val rows = FrameIndex.default(arr.head.length)
       val cols = FrameIndex.default(arr.length)
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, A]: CDataFrame[R, C, A] = ???
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: CDataFrame[R, C, A] =
+    apply(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       arr: DataMatrix[A]
