@@ -16,7 +16,7 @@ object GeckoCSVUtil {
 
   def streamFrame[F[_]: Sync, R, C, A: ClassTag](
       frame: DataFrame[R, C, A]
-  )(implicit g: EmptyGecko[A]): Stream[F, Byte] = {
+  )(implicit g: EmptyGecko[A], e: EmptyPrint[A]): Stream[F, Byte] = {
     def colIxBytes(vec: FrameIndex[C]): Array[Byte] = {
       val stringBuff = new java.lang.StringBuilder()
       var i          = 0
@@ -34,11 +34,11 @@ object GeckoCSVUtil {
       var i          = 0
       stringBuff.append("\n")
       while (i < vec.length - 1) {
-        stringBuff.append(vec.at(i).getOrElse("nan"))
+        stringBuff.append(vec.at(i).getOrElse(e.repr))
         stringBuff.append(",")
         i += 1
       }
-      stringBuff.append(vec.at(i).getOrElse("nan"))
+      stringBuff.append(vec.at(i).getOrElse(e.repr))
       stringBuff.toString.getBytes(StandardCharsets.US_ASCII)
     }
 
