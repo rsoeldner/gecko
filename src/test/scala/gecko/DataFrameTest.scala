@@ -1,8 +1,6 @@
 package gecko
 
-import org.scalatest.{FlatSpec, Matchers}
-
-class DataFrameTest extends FlatSpec with Matchers {
+class DataFrameTest extends TestSpec {
 
   behavior of "DataFrame"
 

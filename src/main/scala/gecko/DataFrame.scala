@@ -12,14 +12,33 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     private[gecko] val values: DataMatrix[A],
     val rowIx: FrameIndex[R],
     val colIx: FrameIndex[C]
-)(implicit emptyGecko: EmptyGecko[A]) {
+)(implicit emptyGecko: EmptyGecko[A],
+  emptyPrint: EmptyPrint[A]) {
 
+  /** Number of Rows
+    *
+    * @return
+    */
   def numRows: Int = rowIx.length
 
+  /** Number of Columns
+    *
+    * @return
+    */
   def numCols: Int = colIx.length
 
+  /** Return selected row
+    *
+    * @param r index
+    * @return
+    */
   def row(r: R): DataVector[A]
 
+  /** return selected column
+    *
+    * @param c
+    * @return
+    */
   def col(c: C): DataVector[A]
 
   /** Return the row at a specified index
@@ -92,6 +111,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     */
   override def toString: String = {
     val builder = new java.lang.StringBuilder()
+    builder.append(s"[$numRows x $numCols]\n")
     builder.append(s"Columns: ${colIx.underlying.mkString(" ")}\n")
     var i = 0
     if (numRows < 6) {
@@ -120,6 +140,12 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     }
   }
 
+  /** GroupBy single column
+    *
+    * @param c Column name
+    * @return
+    */
+
   def groupBy_(c: C): List[(A, DataFrame[Int, C, A])] = {
     val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
     var r = 0
@@ -137,6 +163,11 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     }.toList
   }
 
+  /** GroupBy list of dimensions
+    *
+    * @param dim List of dimensions from left to right
+    * @return
+    */
   def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
     val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
     dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
@@ -147,6 +178,11 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     }
   }
 
+  /** Concat two DataFrame's row-wise
+    *
+    * @param other
+    * @return
+    */
   def ++(other: DataFrame[R,C,A]): DataFrame[R, C, A] = {
     val newRowIx = rowIx ++ other.rowIx
     val newValues = Array.concat(values, other.values)
@@ -156,7 +192,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
 }
 
 object DataFrame {
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
@@ -165,13 +201,14 @@ object DataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, A]: DataFrame[R, C, A] = ???
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: DataFrame[R, C, A] =
+    DataFrame(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
-  ): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
+  )(implicit emptyPrint: EmptyPrint[A]): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
     def head(n: Int): DataFrame[R, C, A] =
       apply(rowIx.slice(0, n), colIx, values)
 
@@ -189,7 +226,7 @@ object DataFrame {
         val colIndex  = colIx.index(i)
         while (j < rowIx.length) {
           newValues(j) = newValues(j).replace(colIndex, f(newValues(j)(colIndex)))
-          j+=1
+          j += 1
         }
 
         apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
@@ -219,7 +256,7 @@ object DataFrame {
     }
   }
 
-  def fill[A: ClassTag: EmptyGecko](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
+  def fill[A: ClassTag: EmptyGecko: EmptyPrint](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
     default(DataMatrix.fill(n, vector))
 
 }

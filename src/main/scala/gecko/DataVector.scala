@@ -17,6 +17,15 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
 
   @inline def apply(i: Int): A = underlying(i)
 
+  def at(i: Int): Option[A] =
+    if (0 <= i && i < length && emptyGecko.nonEmpty(apply(i))) {
+      Some(apply(i))
+    } else None
+
+  /** Number of Elements
+    *
+    * @return
+    */
   @inline def length: Int = underlying.length
 
   def map[B: ClassTag](f: A => B): DataVector[B]
@@ -60,14 +69,34 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
     */
   def slice(begin: Int, end: Int): DataVector[A]
 
+  /** Return first Element if possible, otherwise None
+    *
+    * @return
+    */
   def head: Option[A]
 
+  /** Return unsafe first element
+    *
+    * @return
+    */
   def headUnsafe: A
 
+  /** Return all elements except the first one
+    *
+    * @return
+    */
   def tail: DataVector[A]
 
+  /** Return last element if possible, otherwise None
+    *
+    * @return
+    */
   def last: Option[A]
 
+  /** Return unsafe last element
+    *
+    * @return
+    */
   def lastUnsafe: A
 
   /** Shift N elements by shifting the elements inside of the DataVector, and filling the rest
@@ -127,6 +156,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A](
     builder.append(")")
     builder.toString
   }
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case d: DataVector[_] =>
+      underlying.sameElements(d.underlying)
+    case _ => false
+  }
 }
 
 object DataVector {
@@ -167,8 +202,8 @@ object DataVector {
         }
 
       def +(other: A): DataVector[A] = {
-        val len = length
-        val newArray = new Array[A](len+1)
+        val len      = length
+        val newArray = new Array[A](len + 1)
         System.arraycopy(underlying, 0, newArray, 0, len)
         newArray(len) = other
         fromArray(newArray)

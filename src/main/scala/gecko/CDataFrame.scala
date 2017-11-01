@@ -8,15 +8,20 @@ import scala.reflect.ClassTag
   */
 sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
     private[gecko] val values: DataMatrix[A],
-    rowIx: FrameIndex[R],
-    colIx: FrameIndex[C]
-)(implicit emptyGecko: EmptyGecko[A]) {
+    val rowIx: FrameIndex[R],
+    val colIx: FrameIndex[C]
+)(implicit emptyGecko: EmptyGecko[A],
+  emptyPrint: EmptyPrint[A]) {
 
   /** Return the number of rows
     *
     */
   def numRows: Int = rowIx.length
 
+  /** Return the number of columns
+    *
+    * @return
+    */
   def numCols: Int = colIx.length
 
   def rowAtIx(i: Int): DataVector[A] =
@@ -33,6 +38,11 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
       DataVector.fromArray(newArray)
     }
 
+  /** Return column at index i
+    *
+    * @param i index
+    * @return DataVector[A]
+    */
   def colAtIx(i: Int): DataVector[A] =
     if (i >= rowIx.length || i < 0)
       DataVector.empty[A]
@@ -40,13 +50,35 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
       values(colIx.index(i))
     }
 
+  /** mapColAt
+    *
+    * @param i column index
+    * @param f applied function
+    * @return
+    */
   def mapColAt(i: Int, f: A => A): CDataFrame[R, C, A]
 
+  /** mapRowAt
+    *
+    * @param i cow index
+    * @param f applied function
+    * @return
+    */
   def mapRowAt(i: Int, f: A => A): CDataFrame[R, C, A]
 
+  /** transpose
+    *
+    * @return transposed DataFrame
+    */
   def transpose: DataFrame[C, R, A]
 
+  /** Return first n rows
+    *
+    * @param n number of rows
+    * @return
+    */
   def head(n: Int): CDataFrame[R, C, A]
+
 
   /** Shitty to string
     *
@@ -80,21 +112,35 @@ sealed abstract class CDataFrame[R, C, @specialized(Int, Double, Boolean, Long) 
       i += 1
     }
   }
+
+  /** Concat two CDataFrame rowise
+    *
+    * @param other
+    * @return
+    */
+
+  def ++(other: CDataFrame[R, C, A]): CDataFrame[Int, C, A] = {
+    val nRows  = numRows + other.numRows
+    val matrix = Array.concat(values, other.values)
+    CDataFrame(FrameIndex.default(nRows), colIx, DataMatrix.unsafeFromArray(matrix))
+  }
+
 }
 
 object CDataFrame {
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag](arr: DataMatrix[A]): CDataFrame[Int, Int, A] =
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](arr: DataMatrix[A]): CDataFrame[Int, Int, A] =
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
-      val rows = FrameIndex.default(arr.head.underlying.length) //todo: Fix this ugly shit
+      val rows = FrameIndex.default(arr.head.length)
       val cols = FrameIndex.default(arr.length)
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R, C, A]: CDataFrame[R, C, A] = ???
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: CDataFrame[R, C, A] =
+    apply(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
-  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       arr: DataMatrix[A]
   ): CDataFrame[Int, Int, A] =
     if (arr.isEmpty)
@@ -105,7 +151,7 @@ object CDataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
@@ -140,7 +186,7 @@ object CDataFrame {
       }
   }
 
-  def fill[A: ClassTag: EmptyGecko](n: Int, vector: DataVector[A]): CDataFrame[Int, Int, A] =
+  def fill[A: ClassTag: EmptyGecko: EmptyPrint](n: Int, vector: DataVector[A]): CDataFrame[Int, Int, A] =
     default(DataMatrix.fill(n, vector))
 
 }
