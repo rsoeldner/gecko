@@ -221,7 +221,7 @@ object DataFrame {
       values: DataMatrix[A]
   )(implicit emptyPrint: EmptyPrint[A]): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
 
-    def unsafeHead(n: Int): DataFrame[R, C, A] = apply(rowIx.slice(0, n), colIx, values)
+    def unsafeHead(n: Int): DataFrame[R, C, A] = apply(rowIx.unsafeSlice(0, n), colIx, values)
 
     def head(n: Int): Either[GeckoError, DataFrame[R, C, A]] =
       if (0 <= n && n < numRows) Right(unsafeHead(n))
@@ -268,24 +268,24 @@ object DataFrame {
 
     def withRowAsColIx(i: Int): Either[GeckoError, DataFrame[R, A, A]] = rowAtIx(i).flatMap { row =>
       val newColIx = colIx.copy(underlying = row.underlying)
-      Right(apply(rowIx.removeIx(i), newColIx, values))
+      Right(apply(rowIx.unsafeRemoveIx(i), newColIx, values))
     }
 
     def unsafeWithRowAsColIx(i: Int): DataFrame[R, A, A] = {
       val row      = unsafeRowAtIx(i)
       val newColIx = colIx.copy(underlying = row.underlying)
-      apply(rowIx.removeIx(i), newColIx, values)
+      apply(rowIx.unsafeRemoveIx(i), newColIx, values)
     }
 
     def withColAsRowIx(i: Int): Either[GeckoError, DataFrame[A, C, A]] = colAtIx(i).flatMap { col =>
       val newRowIx = rowIx.copy(underlying = col.underlying)
-      Right(apply(newRowIx, colIx.removeIx(i), values))
+      Right(apply(newRowIx, colIx.unsafeRemoveIx(i), values))
     }
 
     def unsafeWithColAsRowIx(i: Int): DataFrame[A, C, A] = {
       val col      = unsafeColAtIx(i)
       val newRowIx = rowIx.copy(underlying = col.underlying)
-      apply(newRowIx, colIx.removeIx(i), values)
+      apply(newRowIx, colIx.unsafeRemoveIx(i), values)
     }
   }
 

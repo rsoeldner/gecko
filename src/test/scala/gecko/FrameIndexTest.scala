@@ -15,12 +15,12 @@ class FrameIndexTest extends TestSpec {
   }
 
   it should "store properly" in {
-    val res = FrameIndex.default(10).slice(5,10)
+    val res = FrameIndex.default(10).unsafeSlice(5,10)
     assert(res.length == 5)
   }
 
   it should "remove properly" in {
-    val res = FrameIndex.default(10).removeIx(0)
+    val res = FrameIndex.default(10).unsafeRemoveIx(0)
     assert(res.length == 9)
   }
 
