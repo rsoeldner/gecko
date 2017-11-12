@@ -37,17 +37,17 @@ class DataVectorTest extends TestSpec {
   }
 
   it should "drop correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).drop(2)
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDrop(2)
     vec.underlying shouldBe(Array(3,4,5))
   }
 
   it should "dropLast correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).dropLast
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDropLast
     vec.underlying shouldBe(Array(1,2,3,4))
   }
 
   it should "dropLastN correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).dropLastN(2)
+    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDropLastN(2)
     vec.underlying shouldBe(Array(1,2,3))
   }
 

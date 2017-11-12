@@ -6,7 +6,7 @@ import cats.effect.{Effect, Sync}
 import gecko._
 import fs2._
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object GeckoCSVUtil {
@@ -14,12 +14,12 @@ object GeckoCSVUtil {
   private val quoteChar = '"'
   private val separator = ','
 
-  def streamFrame[F[_]: Sync, R, C, A: ClassTag](
-      frame: DataFrame[R, C, A]
-  )(implicit g: EmptyGecko[A], e: EmptyPrint[A]): Stream[F, Byte] = {
+  def streamFrame[F[_] : Sync, R, C, A: ClassTag](
+                                                   frame: DataFrame[R, C, A]
+                                                 )(implicit g: EmptyGecko[A], e: EmptyPrint[A]): Stream[F, Byte] = {
     def colIxBytes(vec: FrameIndex[C]): Array[Byte] = {
       val stringBuff = new java.lang.StringBuilder()
-      var i          = 0
+      var i = 0
       while (i < vec.length - 1) {
         stringBuff.append(vec(i))
         stringBuff.append(",")
@@ -31,7 +31,7 @@ object GeckoCSVUtil {
 
     def rowBytes(vec: DataVector[A]): Array[Byte] = {
       val stringBuff = new java.lang.StringBuilder()
-      var i          = 0
+      var i = 0
       stringBuff.append("\n")
       while (i < vec.length - 1) {
         stringBuff.append(vec.at(i).getOrElse(e.repr))
@@ -45,7 +45,7 @@ object GeckoCSVUtil {
     Stream.emits(colIxBytes(frame.colIx)).covary[F] ++
       Stream
         .emits(Array.range(0, frame.numRows))
-        .flatMap(i => Stream.emits(rowBytes(frame.rowAtIx(i))))
+        .flatMap(i => Stream.emits(rowBytes(frame.unsafeRowAtIx(i))))
         .covary[F]
   }
 
@@ -71,7 +71,7 @@ object GeckoCSVUtil {
     var inQoff = 0 // offset if there is a quote character to strip
 
     val carr = line.toCharArray // line as character array
-    val slen = carr.length      // length of line
+    val slen = carr.length // length of line
 
     while (curEnd < slen) {
       val chr = carr(curEnd) // get current character
@@ -104,10 +104,4 @@ object GeckoCSVUtil {
 
     result.toArray
   }
-}
-
-case class InvalidCSVError(cause: String) extends Exception {
-  override def getMessage: String = cause
-
-  override def fillInStackTrace(): Throwable = this
 }

@@ -2,3 +2,4 @@
 target
 project/
 full_df.csv
+*.sc

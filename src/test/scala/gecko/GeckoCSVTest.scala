@@ -18,7 +18,7 @@ class GeckoCSVTest extends TestSpec {
 
     frame.numRows shouldBe 3
     frame.numCols shouldBe 4
-    frame.rowAtIx(0).map(_.toInt) shouldBe DataVector(1, 2, 3, 4)
+    frame.unsafeRowAtIx(0).map(_.toInt) shouldBe DataVector(1, 2, 3, 4)
   }
 
   it should "fail a csv with uneven rows" in {
@@ -30,7 +30,7 @@ class GeckoCSVTest extends TestSpec {
 
     val frame = GeckoCSVUtil.parseFrame(Stream.emits(csvFrameBytes).covary[IO]).attempt.unsafeRunSync()
 
-    frame shouldBe Left(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+    frame shouldBe Left(DataFrameInitError("Invalid length. DataVectors must all be of the same length"))
   }
 
 }
