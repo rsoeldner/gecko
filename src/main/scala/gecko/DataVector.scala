@@ -209,12 +209,13 @@ object DataVector {
         fromArray(newArray)
       }
 
-      def unsafeRemove(i: Int): DataVector[A] =
-        fromArray(removeElemAt(underlying, i))
-
       def remove(i: Int): Either[GeckoError, DataVector[A]] =
         if (0 <= i && i < length) Right(unsafeRemove(i))
         else Left(IndexOutOfBoundError(i, length))
+
+      def unsafeRemove(i: Int): DataVector[A] =
+        fromArray(removeElemAt(underlying, i))
+
 
       def +(other: A): DataVector[A] = {
         val len = length
@@ -227,26 +228,26 @@ object DataVector {
       def ++[B >: A : ClassTag](other: DataVector[B]): DataVector[B] =
         fromArray[B](arrayAppend[B](underlying.asInstanceOf[Array[B]], other.underlying))
 
-      def unsafeDrop(n: Int): DataVector[A] =
-        fromArray(copyRange(underlying, n, underlying.length))
-
       def drop(n: Int): Either[GeckoError, DataVector[A]] =
         if (0 <= n && n < length) Right(unsafeDrop(n))
         else Left(IndexOutOfBoundError(n, length))
 
-      def unsafeDropLastN(n: Int): DataVector[A] =
-        fromArray(copyRange(underlying, 0, array.length - n))
+      def unsafeDrop(n: Int): DataVector[A] =
+        fromArray(copyRange(underlying, n, underlying.length))
 
       def dropLastN(n: Int): Either[GeckoError, DataVector[A]] =
         if (0 <= n && n < length) Right(unsafeDropLastN(n))
         else Left(NotEnoughElementsError(n, length))
 
-      def unsafeSlice(begin: Int, until: Int): DataVector[A] =
-        fromArray(copyRange(underlying, begin, until))
+      def unsafeDropLastN(n: Int): DataVector[A] =
+        fromArray(copyRange(underlying, 0, array.length - n))
 
       def slice(begin: Int, until: Int): Either[GeckoError, DataVector[A]] =
         if (0 <= begin && begin < until && until < length) Right(unsafeSlice(begin, until))
         else Left(InvalidArgumentError)
+
+      def unsafeSlice(begin: Int, until: Int): DataVector[A] =
+        fromArray(copyRange(underlying, begin, until))
 
       def head: Option[A] =
         if (underlying.length == 0)

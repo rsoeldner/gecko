@@ -12,11 +12,16 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
 
   @inline def length: Int = underlying.length
 
-  def slice(begin: Int, end: Int): FrameIndex[A] = {
+  def unsafeSlice(begin: Int, end: Int): FrameIndex[A] = {
     val underlyingSlice = copyRange(underlying, begin, end)
     val indexSlice = copyRange(indexes, begin, end)
     FrameIndex(underlyingSlice, indexSlice)
   }
+
+  def slice(begin: Int, end: Int): Either[GeckoError, FrameIndex[A]] =
+    if(0 <= begin && begin < end && end < length) Right(unsafeSlice(begin, end))
+    else Left(InvalidArgumentError)
+
 
   def ++(other: FrameIndex[A]) = {
     val size = length + other.length
@@ -28,11 +33,11 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
   /** Remove elements at index i
     *
     */
-  def removeIx(i: Int): FrameIndex[A] =
-    if (i < 0 || i >= underlying.length)
-      this
-    else
-      FrameIndex(removeElemAt(underlying, i), removeElemAt(indexes, i))
+  def unsafeRemoveIx(i: Int): FrameIndex[A] = FrameIndex(removeElemAt(underlying, i), removeElemAt(indexes, i))
+
+  def removeIx(i: Int): Either[GeckoError, FrameIndex[A]] =
+    if(0 <= i && i < length) Right(unsafeRemoveIx(i))
+    else Left(IndexOutOfBoundError(i, length))
 
   def findOne(identifier: A): Either[GeckoError, Int] = {
     val pos = unsafeFindOne(identifier)
