@@ -18,7 +18,7 @@ class GeckoCSVTest extends TestSpec {
 
     frame.numRows shouldBe 3
     frame.numCols shouldBe 4
-    frame.rowAtIx(0).map(_.toInt) shouldBe DataVector(1, 2, 3, 4)
+    frame.unsafeRowAtIx(0).map(_.toInt) shouldBe DataVector(1, 2, 3, 4)
   }
 
   it should "fail a csv with uneven rows" in {

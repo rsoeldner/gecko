@@ -12,8 +12,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     private[gecko] val values: DataMatrix[A],
     val rowIx: FrameIndex[R],
     val colIx: FrameIndex[C]
-)(implicit emptyGecko: EmptyGecko[A],
-  emptyPrint: EmptyPrint[A]) {
+)(implicit emptyGecko: EmptyGecko[A], emptyPrint: EmptyPrint[A]) {
 
   /** Number of Rows
     *
@@ -32,25 +31,24 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     * @param r index
     * @return
     */
-  def row(r: R): DataVector[A]
+  def row(r: R): Either[GeckoError, DataVector[A]]
+
+  def unsafeRow(r: R): DataVector[A]
 
   /** return selected column
     *
     * @param c
     * @return
     */
-  def col(c: C): DataVector[A]
+  def col(c: C): Either[GeckoError, DataVector[A]]
 
-  /** Return the row at a specified index
-    * If the index if out of bounds, it will return an empty vector
-    *
-    */
-  def rowAtIx(i: Int): DataVector[A] =
-    if (i >= rowIx.length || i < 0)
-      DataVector.empty[A]
-    else {
-      values(rowIx.index(i))
-    }
+  def unsafeCol(c: C): DataVector[A]
+
+  def rowAtIx(i: Int): Either[GeckoError, DataVector[A]] =
+    if (0 <= i && i < numRows) Right(unsafeColAtIx(i))
+    else Left(RowOutOfBoundError(i, numRows))
+
+  def unsafeRowAtIx(i: Int) = values(rowIx.index(i))
 
   /** Apply F over all values in a dataframe
     *
@@ -66,45 +64,56 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   /** Retrieve the column at position i, as a DataVector
     *
     */
-  def colAtIx(i: Int): DataVector[A] =
-    if (i >= colIx.length || i < 0)
-      DataVector.empty[A]
-    else {
-      val newArray = new Array[A](rowIx.length)
-      var j        = 0
-      val colIndex = colIx.index(i)
-      while (j < rowIx.length) {
-        newArray(j) = values(rowIx.index(i))(colIndex)
-        j += 1
-      }
-      DataVector.fromArray(newArray)
+  def colAtIx(i: Int): Either[GeckoError, DataVector[A]] =
+    if (0 <= i && i < numCols) Right(unsafeColAtIx(i))
+    else Left(ColOutOfBoundError(i, numCols))
+
+  def unsafeColAtIx(i: Int): DataVector[A] = {
+    val newArray = new Array[A](rowIx.length)
+    var j        = 0
+    val colIndex = colIx.index(i)
+    while (j < rowIx.length) {
+      newArray(j) = values(rowIx.index(i))(colIndex)
+      j += 1
     }
+    DataVector.fromArray(newArray)
+  }
 
   /** Apply F over a column at position i
     *
     */
-  def mapColAt(i: Int, f: A => A): DataFrame[R, C, A]
+  def mapColAt(i: Int, f: A => A): Either[GeckoError, DataFrame[R, C, A]]
+
+  def unsafeMapColAt(i: Int, f: A => A): DataFrame[R, C, A]
 
   /** Apply F over a row at position i
     * if i is out of bounds, it is a no-op.
     *
     */
-  def mapRowAt(i: Int, f: A => A): DataFrame[R, C, A]
+  def mapRowAt(i: Int, f: A => A): Either[GeckoError, DataFrame[R, C, A]]
+
+  def unsafeMapRowAt(i: Int, f: A => A): DataFrame[R, C, A]
 
   /** Return the first n elements
     *
     */
-  def head(n: Int): DataFrame[R, C, A]
+  def head(n: Int): Either[GeckoError, DataFrame[R, C, A]]
+
+  def unsafeHead(n: Int): DataFrame[R, C, A]
 
   /** Use row i's values as the column index labels/values
     *
     */
-  def withRowAsColIx(i: Int): DataFrame[R, A, A]
+  def withRowAsColIx(i: Int): Either[GeckoError, DataFrame[R, A, A]]
+
+  def unsafeWithRowAsColIx(i: Int): DataFrame[R, A, A]
 
   /** Use col i's values as the row indexes
     *
     */
-  def withColAsRowIx(i: Int): DataFrame[A, C, A]
+  def withColAsRowIx(i: Int): Either[GeckoError, DataFrame[A, C, A]]
+
+  def unsafeWithColAsRowIx(i: Int): DataFrame[A, C, A]
 
   /** Shitty to string
     *
@@ -145,23 +154,22 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     * @param c Column name
     * @return
     */
+  def groupBy_(c: C): Either[GeckoError, List[(A, DataFrame[Int, C, A])]] =
+    colIx.findOne(c).map { idx =>
+      val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
+      var r    = 0
 
-  def groupBy_(c: C): List[(A, DataFrame[Int, C, A])] = {
-    val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
-    var r = 0
-    val idx = colIx.findOne(c)
+      while (r < numRows) {
+        val entry = values(r)(idx)
+        book.getOrElseUpdate(entry, new ListBuffer[DataVector[A]]) += unsafeRowAtIx(r)
 
-    while(r < numRows) {
-      val entry =values(r)(idx)
-      book.getOrElseUpdate(entry, new ListBuffer[DataVector[A]]) += rowAtIx(r)
-
-      r += 1
+        r += 1
+      }
+      book.mapValues { buf =>
+        val matrix = DataMatrix.unsafeFromArray(buf.result().toArray)
+        DataFrame(FrameIndex.default(matrix.length), colIx, matrix)
+      }.toList
     }
-    book.mapValues{buf =>
-      val matrix = DataMatrix.unsafeFromArray(buf.result().toArray)
-      DataFrame(FrameIndex.default(matrix.length), colIx, matrix)
-    }.toList
-  }
 
   /** GroupBy list of dimensions
     *
@@ -171,10 +179,11 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
     val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
     dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
-      case (list, dimension) => for {
-        listMap <- list
-        elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension)
-      } yield (listMap._1.updated(dimension, elem._1), elem._2)
+      case (list, dimension) =>
+        for {
+          listMap                         <- list
+          elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension).right.get
+        } yield (listMap._1.updated(dimension, elem._1), elem._2)
     }
   }
 
@@ -183,16 +192,18 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     * @param other
     * @return
     */
-  def ++(other: DataFrame[R,C,A]): DataFrame[R, C, A] = {
-    val newRowIx = rowIx ++ other.rowIx
+  def ++(other: DataFrame[R, C, A]): DataFrame[R, C, A] = {
+    val newRowIx  = rowIx ++ other.rowIx
     val newValues = Array.concat(values, other.values)
-    DataFrame(newRowIx,colIx, DataMatrix.unsafeFromArray(newValues))
+    DataFrame(newRowIx, colIx, DataMatrix.unsafeFromArray(newValues))
   }
 
 }
 
 object DataFrame {
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](arr: DataMatrix[A]): DataFrame[Int, Int, A] =
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
+      arr: DataMatrix[A]
+  ): DataFrame[Int, Int, A] =
     if (arr.isEmpty) {
       empty[Int, Int, A]
     } else {
@@ -209,49 +220,71 @@ object DataFrame {
       colIx: FrameIndex[C],
       values: DataMatrix[A]
   )(implicit emptyPrint: EmptyPrint[A]): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {
-    def head(n: Int): DataFrame[R, C, A] =
-      apply(rowIx.slice(0, n), colIx, values)
+
+    def unsafeHead(n: Int): DataFrame[R, C, A] = apply(rowIx.slice(0, n), colIx, values)
+
+    def head(n: Int): Either[GeckoError, DataFrame[R, C, A]] =
+      if (0 <= n && n < numRows) Right(unsafeHead(n))
+      else Left(NotEnoughElementsError(n, numRows))
 
     def mapValues(f: (A) => A): DataFrame[R, C, A] =
       apply(rowIx, colIx, DataMatrix.unsafeFromArray(mapCopyArray[DataVector[A], DataVector[A]](values, _.map(f))))
 
     def transpose: DataFrame[C, R, A] = DataFrame[C, R, A](colIx, rowIx, values.transpose)
 
-    def mapColAt(i: Int, f: (A) => A): DataFrame[R, C, A] =
-      if (i >= colIx.length || i < 0)
-        this
-      else {
-        val newValues = copyArray(values)
-        var j         = 0
-        val colIndex  = colIx.index(i)
-        while (j < rowIx.length) {
-          newValues(j) = newValues(j).replace(colIndex, f(newValues(j)(colIndex)))
-          j += 1
-        }
-
-        apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
+    def unsafeMapColAt(i: Int, f: (A) => A): DataFrame[R, C, A] = {
+      val newValues = copyArray(values)
+      var j         = 0
+      val colIndex  = colIx.index(i)
+      while (j < rowIx.length) {
+        newValues(j) = newValues(j).unsafeReplace(colIndex, f(newValues(j)(colIndex)))
+        j += 1
       }
 
-    def mapRowAt(i: Int, f: (A) => A): DataFrame[R, C, A] =
-      if (i >= rowIx.length || i < 0)
-        this
-      else {
-        val newValues = copyArray(values)
-        newValues(rowIx.index(i)) = newValues(rowIx.index(i)).map(f)
-        apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
-      }
+      apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
+    }
 
-    def row(r: R): DataVector[A] = rowAtIx(rowIx.findOne(r))
+    def mapColAt(i: Int, f: A => A): Either[GeckoError, DataFrame[R, C, A]] =
+      if (0 <= i && i < numCols) Right(unsafeMapColAt(i, f))
+      else Left(ColOutOfBoundError(i, numCols))
 
-    def col(c: C): DataVector[A] = colAtIx(colIx.findOne(c))
+    def unsafeMapRowAt(i: Int, f: (A) => A): DataFrame[R, C, A] = {
+      val newValues = copyArray(values)
+      newValues(rowIx.index(i)) = newValues(rowIx.index(i)).map(f)
+      apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
+    }
 
-    def withRowAsColIx(i: Int): DataFrame[R, A, A] = {
-      val newColIx = colIx.copy(underlying = rowAtIx(i).underlying)
+    def mapRowAt(i: Int, f: A => A): Either[GeckoError, DataFrame[R, C, A]] =
+      if (0 <= i && i < numRows) Right(unsafeMapRowAt(i, f))
+      else Left(RowOutOfBoundError(i, numRows))
+
+    def row(r: R): Either[GeckoError, DataVector[A]] = rowIx.findOne(r).flatMap(rowAtIx)
+
+    def unsafeRow(r: R): DataVector[A] = unsafeRowAtIx(rowIx.unsafeFindOne(r))
+
+    def col(c: C): Either[GeckoError, DataVector[A]] = colIx.findOne(c).flatMap(colAtIx)
+
+    def unsafeCol(c: C): DataVector[A] = unsafeColAtIx(colIx.unsafeFindOne(c))
+
+    def withRowAsColIx(i: Int): Either[GeckoError, DataFrame[R, A, A]] = rowAtIx(i).flatMap { row =>
+      val newColIx = colIx.copy(underlying = row.underlying)
+      Right(apply(rowIx.removeIx(i), newColIx, values))
+    }
+
+    def unsafeWithRowAsColIx(i: Int): DataFrame[R, A, A] = {
+      val row      = unsafeRowAtIx(i)
+      val newColIx = colIx.copy(underlying = row.underlying)
       apply(rowIx.removeIx(i), newColIx, values)
     }
 
-    def withColAsRowIx(i: Int): DataFrame[A, C, A] = {
-      val newRowIx = rowIx.copy(underlying = colAtIx(i).underlying)
+    def withColAsRowIx(i: Int): Either[GeckoError, DataFrame[A, C, A]] = colAtIx(i).flatMap { col =>
+      val newRowIx = rowIx.copy(underlying = col.underlying)
+      Right(apply(newRowIx, colIx.removeIx(i), values))
+    }
+
+    def unsafeWithColAsRowIx(i: Int): DataFrame[A, C, A] = {
+      val col      = unsafeColAtIx(i)
+      val newRowIx = rowIx.copy(underlying = col.underlying)
       apply(newRowIx, colIx.removeIx(i), values)
     }
   }

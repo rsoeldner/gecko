@@ -34,7 +34,13 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
     else
       FrameIndex(removeElemAt(underlying, i), removeElemAt(indexes, i))
 
-  def findOne(identifier: A): Int = underlying.indexOf(identifier)
+  def findOne(identifier: A): Either[GeckoError, Int] = {
+    val pos = unsafeFindOne(identifier)
+    if(0 <= pos) Right(pos)
+    else Left(ElementNotFoundError(identifier))
+  }
+
+  def unsafeFindOne(identifier: A): Int = underlying.indexOf(identifier)
 
   def findAll(identifier: A): Array[Int] = indexes.filter(underlying(_) == identifier)
 }
