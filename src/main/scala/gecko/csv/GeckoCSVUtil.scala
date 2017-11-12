@@ -6,7 +6,7 @@ import cats.effect.{Effect, Sync}
 import gecko._
 import fs2._
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 object GeckoCSVUtil {
@@ -104,10 +104,4 @@ object GeckoCSVUtil {
 
     result.toArray
   }
-}
-
-case class InvalidCSVError(cause: String) extends Exception {
-  override def getMessage: String = cause
-
-  override def fillInStackTrace(): Throwable = this
 }
