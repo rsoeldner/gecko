@@ -1,8 +1,8 @@
 # gecko
-fast and _predictable_ data manipulation library inspired by _saddle_ and _pandas_.
+array-backed and _predictable_ data manipulation library inspired by _saddle_ and _pandas_.
 
 A `DataFrame` consists of a _row and column identifier_, specified by `FrameIndex` and a `DataMatrix` which consists of 
-several `DataVector`.
+several `DataVector`'s.
 
 
 ## Examples
