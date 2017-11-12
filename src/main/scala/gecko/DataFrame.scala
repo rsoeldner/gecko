@@ -61,7 +61,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     * Given CDataframe is column-represented, it works perfectly for this purpose
     *
     */
-  def transpose: CDataFrame[C, R, A]
+  def transpose: DataFrame[C, R, A]
 
   /** Retrieve the column at position i, as a DataVector
     *
@@ -215,7 +215,7 @@ object DataFrame {
     def mapValues(f: (A) => A): DataFrame[R, C, A] =
       apply(rowIx, colIx, DataMatrix.unsafeFromArray(mapCopyArray[DataVector[A], DataVector[A]](values, _.map(f))))
 
-    def transpose: CDataFrame[C, R, A] = CDataFrame(colIx, rowIx, values)
+    def transpose: DataFrame[C, R, A] = DataFrame[C, R, A](colIx, rowIx, values.transpose)
 
     def mapColAt(i: Int, f: (A) => A): DataFrame[R, C, A] =
       if (i >= colIx.length || i < 0)

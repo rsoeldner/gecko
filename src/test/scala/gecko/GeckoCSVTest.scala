@@ -30,7 +30,7 @@ class GeckoCSVTest extends TestSpec {
 
     val frame = GeckoCSVUtil.parseFrame(Stream.emits(csvFrameBytes).covary[IO]).attempt.unsafeRunSync()
 
-    frame shouldBe Left(DataframeInitError("Invalid length. DataVectors must all be of the same length"))
+    frame shouldBe Left(DataFrameInitError("Invalid length. DataVectors must all be of the same length"))
   }
 
 }
