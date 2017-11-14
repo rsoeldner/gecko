@@ -6,11 +6,22 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
     underlying: Array[A],
     private[gecko] val indexes: Array[Int]
 ) {
-  @inline def apply(i: Int): A = underlying(i)
-
-  @inline def index(i: Int): Int = indexes(i)
+  @inline def apply(i: Int) = at(i)
 
   @inline def length: Int = underlying.length
+
+  def unsafeAt(i: Int): A = underlying(i)
+
+  def at(i: Int): Either[GeckoError, A] =
+    if(0 <= i && i < length) Right(unsafeAt(i))
+    else Left(NotEnoughElementsError(i, length))
+
+  def unsafeIndex(i: Int): Int = indexes(i)
+
+  def index(i: Int): Either[GeckoError, Int] =
+    if(0 <= i && i < length) Right(unsafeIndex(i))
+    else Left(NotEnoughElementsError(i, length))
+
 
   def unsafeSlice(begin: Int, end: Int): FrameIndex[A] = {
     val underlyingSlice = copyRange(underlying, begin, end)
@@ -49,7 +60,9 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
 
   def findAll(identifier: A): Array[Int] = indexes.filter(underlying(_) == identifier)
 }
+
 object FrameIndex {
+
   def default(size: Int): FrameIndex[Int] = {
     val ix = Array.range(0, size)
     FrameIndex(ix, ix)

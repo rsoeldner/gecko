@@ -48,7 +48,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     if (0 <= i && i < numRows) Right(unsafeColAtIx(i))
     else Left(RowOutOfBoundError(i, numRows))
 
-  def unsafeRowAtIx(i: Int) = values(rowIx.index(i))
+  def unsafeRowAtIx(i: Int) = values(rowIx.unsafeIndex(i))
 
   /** Apply F over all values in a dataframe
     *
@@ -71,9 +71,9 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   def unsafeColAtIx(i: Int): DataVector[A] = {
     val newArray = new Array[A](rowIx.length)
     var j        = 0
-    val colIndex = colIx.index(i)
+    val colIndex = colIx.unsafeIndex(i)
     while (j < rowIx.length) {
-      newArray(j) = values(rowIx.index(i))(colIndex)
+      newArray(j) = values(rowIx.unsafeIndex(i))(colIndex)
       j += 1
     }
     DataVector.fromArray(newArray)
@@ -235,7 +235,7 @@ object DataFrame {
     def unsafeMapColAt(i: Int, f: (A) => A): DataFrame[R, C, A] = {
       val newValues = copyArray(values)
       var j         = 0
-      val colIndex  = colIx.index(i)
+      val colIndex  = colIx.unsafeIndex(i)
       while (j < rowIx.length) {
         newValues(j) = newValues(j).unsafeReplace(colIndex, f(newValues(j)(colIndex)))
         j += 1
@@ -250,7 +250,7 @@ object DataFrame {
 
     def unsafeMapRowAt(i: Int, f: (A) => A): DataFrame[R, C, A] = {
       val newValues = copyArray(values)
-      newValues(rowIx.index(i)) = newValues(rowIx.index(i)).map(f)
+      newValues(rowIx.unsafeIndex(i)) = newValues(rowIx.unsafeIndex(i)).map(f)
       apply(rowIx, colIx, DataMatrix.is[A].coerce(newValues))
     }
 
