@@ -54,7 +54,7 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     */
   def cols(c: Seq[C])(implicit classTag: ClassTag[C]): Either[GeckoError, DataFrame[R, C, A]]
 
-  def unsafeCols(c: C*): DataFrame[R, C, A]
+  def unsafeCols(c: Seq[C])(implicit classTag: ClassTag[C]): DataFrame[R, C, A]
 
   def dropCol(c: C): Either[GeckoError, DataFrame[R, C, A]]
 
@@ -312,9 +312,9 @@ object DataFrame {
     def cols(c: Seq[C])(implicit classTag: ClassTag[C]): Either[GeckoError, DataFrame[R, C, A]] = {
       def loop(list: List[C], acc: List[DataVector[A]]): Either[GeckoError, DataFrame[R, C, A]] = {
         list match {
-          case Nil if acc.isEmpty=> Left(InvalidArgumentError)
+          case Nil if acc.isEmpty => Left(InvalidArgumentError)
           case Nil => Right(DataFrame(rowIx, FrameIndex.fromSeq(c), DataMatrix.unsafeFromSeq(acc)))
-//          case h :: t => colIx.findOne(h).flatMap(cc => loop(t, values(cc) :: acc))
+          //          case h :: t => colIx.findOne(h).flatMap(cc => loop(t, values(cc) :: acc))
           case t => colIx.findOne(t.head).flatMap(cc => loop(t.tail, values(cc) :: acc))
         }
       }
@@ -322,7 +322,16 @@ object DataFrame {
       loop(c.toList, List.empty[DataVector[A]])
     }
 
-    def unsafeCols(c: C*) = ???
+    def unsafeCols(c: Seq[C])(implicit classTag: ClassTag[C]) = {
+      val ix: FrameIndex[C] = FrameIndex.fromSeq(c)
+      val mat = new Array[DataVector[A]](ix.length)
+      var col = 0
+      while (col < ix.length) {
+        mat(col) = values(colIx.unsafeFindOne(c(col)))
+        col += 1
+      }
+      DataFrame(rowIx, ix, DataMatrix.unsafeFromArray(mat))
+    }
 
     def dropCol(c: C) = for {
       ix <- colIx.findOne(c)
@@ -339,8 +348,9 @@ object DataFrame {
       DataFrame[R, C, A](rowIx, cix, DataMatrix.unsafeFromArray(v))
     }
 
-    def fill[A: ClassTag : EmptyGecko : EmptyPrint](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
-      default(DataMatrix.fill(n, vector))
-
   }
+
+  def fill[A: ClassTag : EmptyGecko : EmptyPrint](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
+    default(DataMatrix.fill(n, vector))
+
 }
