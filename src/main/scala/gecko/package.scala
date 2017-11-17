@@ -173,6 +173,8 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
 
     def fromSeq[A](a: Seq[DataVector[A]]): Either[GeckoError, DataMatrix[A]] = apply[A](a: _*)
 
+    def unsafeFromSeq[A](a: Seq[DataVector[A]]): DataMatrix[A] = is.coerce(a.toArray)
+
     def fromSeqF[F[_], A](a: Seq[DataVector[A]])(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] = liftF(a: _*)
 
     def unsafeFromArray[A](arr: Array[DataVector[A]]): DataMatrix[A] = is[A].coerce(arr)

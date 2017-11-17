@@ -54,6 +54,12 @@ object FrameIndex {
     val ix = Array.range(0, size)
     FrameIndex(ix, ix)
   }
+
+  def fromSeq[C: ClassTag](c: Seq[C]): FrameIndex[C] = {
+    val ix = Array.range(0, c.length)
+    FrameIndex[C](c.toArray, ix)
+  }
+
   def empty[A: ClassTag]: FrameIndex[A] =
     FrameIndex(Array.empty[A], Array.empty[Int])
 }
