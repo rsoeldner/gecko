@@ -149,7 +149,22 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
       }
     }
 
-    def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
+    def unsafeFromArrayWithDim[A: ClassTag](rows: Int, cols: Int, values: Array[A]): DataMatrix[A] = {
+      val n = rows * cols
+      val newArray = new Array[DataVector[A]](rows)
+      var r = 0
+      while (r < rows) {
+          val startPos = r * cols
+          val endPos = startPos + cols
+          newArray(r) = DataVector.fromArray(copyRange(values, startPos, endPos))
+
+          r += 1
+        }
+        DataMatrix.unsafeFromArray(newArray)
+      }
+
+
+      def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
       if (vectors.size <= 0)
         F.raiseError(DataFrameInitError("No vectors"))
       else {

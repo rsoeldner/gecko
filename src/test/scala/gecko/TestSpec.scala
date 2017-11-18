@@ -2,7 +2,7 @@ package gecko
 import cats.Eq
 import org.scalatest.{FlatSpec, Matchers}
 
-trait TestSpec extends FlatSpec with Matchers {
+trait TestSpec extends FlatSpec with Matchers{
 
   implicit def eqDataMatrix[A] = new Eq[DataMatrix[A]] {
     override def eqv(x: DataMatrix[A], y: DataMatrix[A]) = (x zip y) forall {
