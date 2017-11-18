@@ -7,7 +7,7 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
   @inline def apply(i: Int): A = underlying(i)
 
   @inline def length: Int = underlying.length
-
+  
   def unsafeSlice(begin: Int, end: Int): FrameIndex[A] = {
     val underlyingSlice = copyRange(underlying, begin, end)
     FrameIndex(underlyingSlice)

@@ -13,19 +13,38 @@ class FrameIndexTest extends TestSpec {
     }
   }
 
-  it should "default should have expected size" in {
-    val res = FrameIndex.default(10)
-    assert(res.length == 10)
-  }
-
-  it should "store properly" in {
-    val res = FrameIndex.default(10).unsafeSlice(5, 10)
-    assert(res.length == 5)
+  it should "slice properly" in {
+    forAll { (a: FrameIndex[Int], b: Int, e: Int) =>
+      val begin = b.abs % a.length
+      val end   = e.abs % a.length
+      whenever(0 <= begin && begin < end && end < a.length) {
+        val res = a.slice(begin, end)
+        res should be('Right)
+        res.right.get.length should be(end - begin)
+      }
+    }
   }
 
   it should "remove properly" in {
-    val res = FrameIndex.default(10).unsafeDropIx(0)
-    assert(res.length == 9)
+    forAll { (a: FrameIndex[Int], i: Int) =>
+      val idx = i.abs % a.length
+      whenever(0 <= idx && idx < a.length) {
+        val res = a.dropIx(idx)
+        res should be('Right)
+        res.right.get.length should be(a.length - 1)
+      }
+    }
+  }
+
+  it should "find properly" in {
+    forAll { (a: FrameIndex[Int]) =>
+      a.underlying.foreach { v =>
+        val res = a.findOne(v)
+        res should be('Right)
+        a.underlying(res.right.get) should be(v)
+      }
+
+    }
   }
 
 }
