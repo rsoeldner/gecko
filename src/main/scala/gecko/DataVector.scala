@@ -16,12 +16,24 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     private[gecko] val underlying: Array[A]
 )(implicit emptyGecko: EmptyGecko[A]) {
 
-  @inline def apply(i: Int): A = underlying(i)
+  @inline private[gecko] def apply(i: Int): A = underlying(i)
 
+  /** Return value at index
+    *
+    * @param i index
+    * @return
+    */
   def at(i: Int): Option[A] =
     if (0 <= i && i < length && emptyGecko.nonEmpty(apply(i))) {
       Some(apply(i))
     } else None
+
+  /** Unsafe version, return value at index
+    *
+    * @param i index
+    * @return
+    */
+  def unsafeAt(i: Int) = apply(i)
 
   /** Number of Elements
     *
@@ -29,31 +41,74 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     */
   @inline def length: Int = underlying.length
 
+  /** map f over each element
+    *
+    * @param f
+    * @tparam B
+    * @return
+    */
   def map[B: ClassTag](f: A => B): DataVector[B] = fromArray(mapCopyArray[A, B](underlying, f))
 
+  /** flatMap over each element
+    *
+    * @param f
+    * @tparam B
+    * @return
+    */
   def flatMap[B: ClassTag](f: A => DataVector[B]): DataVector[B] =
     fromArray(flatMapCopy[A, B](underlying, f(_).underlying))
 
+  /** semiFlatMap
+    *
+    * @param f
+    * @tparam B
+    * @return
+    */
   def semiFlatMap[B: ClassTag](f: A => Array[B]): DataVector[B] = fromArray(flatMapCopy[A, B](underlying, f))
 
+  /** Replace value at specific index
+    *
+    * @param i index
+    * @param elem new value
+    * @return
+    */
   def replace(i: Int, elem: A): Either[GeckoError, DataVector[A]] =
     if (0 <= i && i < length) Right(unsafeReplace(i, elem))
     else Left(IndexOutOfBoundError(i, length))
 
+  /** Unsafe version, replace value at specific index
+    *
+    * @param i index
+    * @param elem new value
+    * @return
+    */
   def unsafeReplace(i: Int, elem: A): DataVector[A] = {
     val newArray = copyArray(underlying)
     newArray(i) = elem
     fromArray(newArray)
   }
 
+  /** Remove element at specific index
+    *
+    * @param i index
+    * @return
+    */
   def remove(i: Int): Either[GeckoError, DataVector[A]] =
     if (0 <= i && i < length) Right(unsafeRemove(i))
     else Left(IndexOutOfBoundError(i, length))
 
+  /** Unsafe version, remove element at specific index
+    *
+    * @param i index
+    * @return
+    */
   def unsafeRemove(i: Int): DataVector[A] = fromArray(removeElemAt(underlying, i))
 
-  /** Append another datavector of the same type
+
+  /** Append element at the end
     *
+    * @param other new element
+    * @return
     */
   def +(other: A): DataVector[A] = {
     val len      = length
@@ -69,29 +124,49 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
   def ++[B >: A: ClassTag](other: DataVector[B]): DataVector[B] =
     fromArray[B](arrayAppend[B](underlying.asInstanceOf[Array[B]], other.underlying))
 
-  /** Drop the first n elements
+  /** Drop value at specific index
     *
+    * @param n index
+    * @return
     */
   def drop(n: Int): Either[GeckoError, DataVector[A]] =
     if (0 <= n && n < length) Right(unsafeDrop(n))
     else Left(IndexOutOfBoundError(n, length))
 
+  /** Unsafe version, drop value at specific index
+    *
+    * @param n
+    * @return
+    */
   def unsafeDrop(n: Int): DataVector[A] = fromArray(copyRange(underlying, n, underlying.length))
 
-  /** Drop 1, at the end
+
+  /** Drop the last value
     *
+    * @return
     */
   def dropLast: Either[GeckoError, DataVector[A]] = dropLastN(1)
 
+  /** Unsafe version, drop the last value
+    *
+    * @return
+    */
   def unsafeDropLast: DataVector[A] = unsafeDropLastN(1)
 
-  /** Drop n elements,
+  /** Drop the last n values
     *
+    * @param n number of elements
+    * @return
     */
   def dropLastN(n: Int): Either[GeckoError, DataVector[A]] =
     if (0 <= n && n < length) Right(unsafeDropLastN(n))
     else Left(NotEnoughElementsError(n, length))
 
+  /** Unsafe version, drop the last n elements
+    *
+    * @param n number of elements
+    * @return
+    */
   def unsafeDropLastN(n: Int): DataVector[A] = fromArray(copyRange(underlying, 0, underlying.length - n))
 
   /** Return a slice of this datavector
@@ -102,6 +177,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     if (0 <= begin && begin < end && end < length) Right(unsafeSlice(begin, end))
     else Left(InvalidArgumentError)
 
+  /** Unsafe version, return a slice of this datavector
+    *
+    * @param begin
+    * @param end
+    * @return
+    */
   def unsafeSlice(begin: Int, end: Int): DataVector[A] = fromArray(copyRange(underlying, begin, end))
 
   /** Return first Element if possible, otherwise None
@@ -126,6 +207,10 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     */
   def tail: Either[GeckoError, DataVector[A]] = slice(1, length)
 
+  /** Unsafe version, return the all elements except the first one
+    *
+    * @return
+    */
   def unsafeTail: DataVector[A] = unsafeSlice(1, length)
 
   /** Return last element if possible, otherwise None

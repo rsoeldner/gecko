@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag](underlying: Array[A]) {
 
-  @inline def apply(i: Int): A = underlying(i)
+  @inline private[gecko] def apply(i: Int): A = underlying(i)
 
   /** Return length
     *
@@ -97,7 +97,7 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
 object FrameIndex {
   def default(size: Int): FrameIndex[Int] = FrameIndex(Array.range(0, size))
 
-  def fromSeq[C: ClassTag](c: Seq[C]): FrameIndex[C] = FrameIndex[C](c.toArray)
+  def fromSeq[@specialized(Int, Double, Boolean, Long) C: ClassTag](c: Seq[C]): FrameIndex[C] = FrameIndex[C](c.toArray)
 
   def empty[A: ClassTag]: FrameIndex[A] = FrameIndex(Array.empty[A])
 }

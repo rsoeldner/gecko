@@ -17,11 +17,18 @@ trait TestSpec extends FlatSpec with Matchers with PropertyChecks {
     def eqv(x: GeckoError, y: GeckoError) = true
   }
 
+  implicit val arbitraryDataVector: Arbitrary[DataVector[Int]] = Arbitrary {
+    for {
+      n    <- Gen.choose(1, 1000)
+      list <- Gen.listOfN(n, Gen.choose(0, n))
+    } yield DataVector.fromArray(list.toArray)
+  }
+
   implicit val arbitaryFrameIndex: Arbitrary[FrameIndex[Int]] = Arbitrary {
     for {
-      n      <- Gen.choose(1, 1000)
-      length <- Gen.listOfN(n, Gen.choose(0, n))
-    } yield FrameIndex.fromSeq(length)
+      n    <- Gen.choose(1, 1000)
+      list <- Gen.listOfN(n, Gen.choose(0, n))
+    } yield FrameIndex.fromSeq(list)
   }
 
   implicit val arbitraryDataFrame: Arbitrary[DataFrame[Int, Int, Int]] = Arbitrary {
