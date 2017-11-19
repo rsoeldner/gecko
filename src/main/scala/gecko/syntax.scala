@@ -9,7 +9,7 @@ object syntax {
   }
 
   implicit class FrameIndexSyntax[T: ClassTag](elem: Seq[T]) {
-    implicit def toIndex: FrameIndex[T] = FrameIndex(elem.toArray, (0 until elem.length).toArray)
+    implicit def toIndex: FrameIndex[T] = FrameIndex(elem.toArray)
   }
 
 }

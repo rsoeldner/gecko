@@ -149,7 +149,22 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
       }
     }
 
-    def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
+    def unsafeFromArrayWithDim[A: ClassTag](rows: Int, cols: Int, values: Array[A]): DataMatrix[A] = {
+      val n = rows * cols
+      val newArray = new Array[DataVector[A]](rows)
+      var r = 0
+      while (r < rows) {
+          val startPos = r * cols
+          val endPos = startPos + cols
+          newArray(r) = DataVector.fromArray(copyRange(values, startPos, endPos))
+
+          r += 1
+        }
+        DataMatrix.unsafeFromArray(newArray)
+      }
+
+
+      def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
       if (vectors.size <= 0)
         F.raiseError(DataFrameInitError("No vectors"))
       else {
@@ -172,6 +187,8 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
         F.raiseError(DataFrameInitError("Invalid length. DataVectors must all be of the same length"))
 
     def fromSeq[A](a: Seq[DataVector[A]]): Either[GeckoError, DataMatrix[A]] = apply[A](a: _*)
+
+    def unsafeFromSeq[A](a: Seq[DataVector[A]]): DataMatrix[A] = is.coerce(a.toArray)
 
     def fromSeqF[F[_], A](a: Seq[DataVector[A]])(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] = liftF(a: _*)
 

@@ -1,55 +1,77 @@
 package gecko
 
+import org.scalacheck.Gen
+import org.scalacheck.Prop._
 import syntax._
 
 class DataVectorTest extends TestSpec {
 
   behavior of "DataVector"
 
-  it should "map correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
-    vec.map(_ + 10).underlying shouldBe(Array(11,12,13,14,15))
+  it should "properly create" in {
+    forAll { (vec: DataVector[Int]) =>
+      vec.length should be > 0
+
+      vec.underlying.length should be(vec.length)
+      vec should be(vec)
+    }
   }
 
-  it should "flatmap correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
-    vec.flatMap(x => Array(x + 10).toDataVector).underlying shouldBe(Array(11,12,13,14,15))
+  it should "properly map" in {
+    forAll { (vec: DataVector[Int]) =>
+      val add1 = (v: Int) => v + 1
+      val res  = vec.map(add1)
+
+      res.underlying should be(vec.underlying.map(_ + 1))
+    }
   }
 
-  it should "semiFlatMap correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
-    vec.semiFlatMap(x => Array(x + 10)).underlying shouldBe(Array(11,12,13,14,15))
+  it should "properly at" in {
+    forAll { (vec: DataVector[Int], i: Int) =>
+      val res = vec.at(i)
+      if(0 <= i && i < vec.length) res shouldBe defined
+      else res should be(None)
+    }
   }
 
-  it should "shift up correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
-    vec.shift(2).underlying shouldBe(Array(Int.MinValue,Int.MinValue,1,2,3))
+  it should "properly flatMap" in {
+    forAll { (vec: DataVector[Int]) =>
+      val add1 = (v: Int) => Array(v + 1).toDataVector
+      val res  = vec.flatMap(add1)
+
+      res.underlying should be(vec.underlying.map(_ + 1))
+    }
   }
 
-  it should "shift down correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5))
-    vec.shift(-2).underlying shouldBe(Array(3,4,5,Int.MinValue, Int.MinValue))
+  it should "properly semiFlatMap" in {
+    forAll { (vec: DataVector[Int]) =>
+      val add1 = (v: Int) => Array(v + 1)
+      val res  = vec.semiFlatMap(add1)
+
+      res.underlying should be(vec.underlying.map(_ + 1))
+    }
   }
 
-  it should "append correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)) ++ Array(6).toDataVector
-    vec.underlying shouldBe(Array(1,2,3,4,5,6))
+  it should "properly shift" in {
+    forAll { (vec: DataVector[Int], s: Int) =>
+      val shift = s % (vec.length-1)
+      whenever(-vec.length < shift && shift < vec.length && shift != 0) {
+        val res = vec.shift(shift)
+        if (s < 0) (0 until res.length + shift).foreach { idx =>
+          vec.unsafeAt(idx - shift) should be(res.unsafeAt(idx))
+        } else {
+          (0 until res.length - shift).foreach { idx =>
+            vec.unsafeAt(idx) should be(res.unsafeAt(idx + shift))
+          }
+        }
+      }
+    }
   }
 
-  it should "drop correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDrop(2)
-    vec.underlying shouldBe(Array(3,4,5))
+  it should "properly append" in {
+    forAll { (a: DataVector[Int], b: DataVector[Int]) =>
+      (a ++ b).length should be(a.length + b.length)
+    }
   }
-
-  it should "dropLast correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDropLast
-    vec.underlying shouldBe(Array(1,2,3,4))
-  }
-
-  it should "dropLastN correct" in {
-    val vec = DataVector.fromArray(Array[Int](1,2,3,4,5)).unsafeDropLastN(2)
-    vec.underlying shouldBe(Array(1,2,3))
-  }
-
 
 }
