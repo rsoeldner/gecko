@@ -383,6 +383,29 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   def concat(other: DataFrame[R, C, A]): Either[GeckoError, DataFrame[R, C, A]] =
     if (this.numCols == other.numCols && colIx == other.colIx) Right(unsafeConcat(other))
     else Left(InvalidArgumentError)
+
+  /** Replace row by v
+    *
+    * @param row index
+    * @param v new values
+    * @return
+    */
+  def replaceRow(row: Int, v: DataVector[A]): Either[GeckoError, DataFrame[R, C, A]] =
+    if (0 <= row && row < numRows && v.length == numCols) Right(unsafeReplaceRow(row, v))
+    else Left(InvalidArgumentError)
+
+  /** Unsafe version, replace row by v
+    *
+    * @param row index
+    * @param v new values
+    * @return
+    */
+  def unsafeReplaceRow(row: Int, v: DataVector[A]): DataFrame[R, C, A] = {
+    val newArr: Array[DataVector[A]] = values.clone()
+    newArr(row) = v
+    DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(newArr))
+  }
+
 }
 
 object DataFrame {
