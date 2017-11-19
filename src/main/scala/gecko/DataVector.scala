@@ -3,6 +3,7 @@ package gecko
 import cats.Eq
 import gecko.DataVector.fromArray
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /** An Immutable, array-backed Vector implementation.
@@ -104,7 +105,6 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     */
   def unsafeRemove(i: Int): DataVector[A] = fromArray(removeElemAt(underlying, i))
 
-
   /** Append element at the end
     *
     * @param other new element
@@ -139,7 +139,6 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @return
     */
   def unsafeDrop(n: Int): DataVector[A] = fromArray(copyRange(underlying, n, underlying.length))
-
 
   /** Drop the last value
     *
@@ -228,6 +227,33 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @return
     */
   def unsafeLast: A = underlying(underlying.length - 1)
+
+  def filter(p: A => Boolean): DataVector[A] = {
+    val buf = new ListBuffer[A]
+    var i   = 0
+    while (i < length) {
+      if (emptyGecko.nonEmpty(underlying(i)) && p(underlying(i))) {
+        buf += underlying(i)
+
+        i += 1
+      }
+    }
+    fromArray(buf.toArray)
+  }
+
+  def zip[B >: A: ClassTag](other: DataVector[B]): DataVector[(A, B)] =
+    fromArray(underlying.zip(other.underlying))
+
+  def takeWhile(p: A => Boolean, ix: Int = 0): DataVector[A] = {
+    var i = ix
+    while (i < length) {
+      if (!(emptyGecko.nonEmpty(underlying(i)) && p(underlying(i))))
+        return fromArray(copyRange[A](underlying, ix, i))
+
+      i += 1
+    }
+    this
+  }
 
   /** Shift N elements by shifting the elements inside of the DataVector, and filling the rest
     * of the columns with the `empty` value for A
