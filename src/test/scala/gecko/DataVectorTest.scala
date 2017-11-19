@@ -1,5 +1,7 @@
 package gecko
 
+import org.scalacheck.Gen
+import org.scalacheck.Prop._
 import syntax._
 
 class DataVectorTest extends TestSpec {
@@ -24,6 +26,14 @@ class DataVectorTest extends TestSpec {
     }
   }
 
+  it should "properly at" in {
+    forAll { (vec: DataVector[Int], i: Int) =>
+      val res = vec.at(i)
+      if(0 <= i && i < vec.length) res shouldBe defined
+      else res should be(None)
+    }
+  }
+
   it should "properly flatMap" in {
     forAll { (vec: DataVector[Int]) =>
       val add1 = (v: Int) => Array(v + 1).toDataVector
@@ -44,13 +54,14 @@ class DataVectorTest extends TestSpec {
 
   it should "properly shift" in {
     forAll { (vec: DataVector[Int], s: Int) =>
-      whenever(-vec.length < s && s < vec.length && s != 0) {
-        val res = vec.shift(s)
-        if (s < 0) (0 until res.length + s).foreach { idx =>
-          vec.unsafeAt(idx - s) should be(res.unsafeAt(idx))
+      val shift = s % (vec.length-1)
+      whenever(-vec.length < shift && shift < vec.length && shift != 0) {
+        val res = vec.shift(shift)
+        if (s < 0) (0 until res.length + shift).foreach { idx =>
+          vec.unsafeAt(idx - shift) should be(res.unsafeAt(idx))
         } else {
-          (0 until res.length - s).foreach { idx =>
-            vec.unsafeAt(idx) should be(res.unsafeAt(idx + s))
+          (0 until res.length - shift).foreach { idx =>
+            vec.unsafeAt(idx) should be(res.unsafeAt(idx + shift))
           }
         }
       }
