@@ -149,6 +149,14 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
       }
     }
 
+    /** Unsafe construct a DataMatrix from a single array baed on rows and cols
+      *
+      * @param rows number of rows
+      * @param cols number of cols
+      * @param values array of values
+      * @tparam A
+      * @return
+      */
     def unsafeFromArrayWithDim[A: ClassTag](rows: Int, cols: Int, values: Array[A]): DataMatrix[A] = {
       val n = rows * cols
       val newArray = new Array[DataVector[A]](rows)
@@ -162,7 +170,6 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
         }
         DataMatrix.unsafeFromArray(newArray)
       }
-
 
       def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
       if (vectors.size <= 0)
@@ -192,14 +199,32 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
 
     def fromSeqF[F[_], A](a: Seq[DataVector[A]])(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] = liftF(a: _*)
 
+    /** Unsafe version, return DataMatrix from Array of DataVector
+      *
+      * @param arr Array of DataVector
+      * @tparam A
+      * @return
+      */
     def unsafeFromArray[A](arr: Array[DataVector[A]]): DataMatrix[A] = is[A].coerce(arr)
 
+    /** Fill DataMatrix with constant DataVector
+      *
+      * @param n number of rows
+      * @param elem row values
+      * @tparam A
+      * @return
+      */
     def fill[A](n: Int, elem: DataVector[A]): DataMatrix[A] =
       is.coerce(Array.fill(n)(elem))
 
     @inline def is[A]: Is[Array[DataVector[A]], DataMatrix[A]] =
       taggedDataVector$$.is[A]
 
+    /** Return empty DataMatrix
+      *
+      * @tparam A
+      * @return
+      */
     def empty[A: ClassTag]: DataMatrix[A] = is[A].coerce(Array.empty[DataVector[A]])
   }
 
