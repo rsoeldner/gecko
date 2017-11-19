@@ -406,6 +406,32 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(newArr))
   }
 
+  /** Replace column by v
+    *
+    * @param col index
+    * @param v new values
+    * @return
+    */
+  def replaceCol(col: Int, v: DataVector[A]): Either[GeckoError, DataFrame[R, C, A]] =
+    if (0 <= col && col < numCols && v.length == numRows) Right(unsafeReplaceCol(col, v))
+    else Left(InvalidArgumentError)
+
+  /** Unsafe version, replace column by v
+    *
+    * @param col index
+    * @param v new values
+    * @return
+    */
+  def unsafeReplaceCol(col: Int, v: DataVector[A]): DataFrame[R, C, A] = {
+    val newArr: Array[DataVector[A]] = values.clone()
+    var i                            = 0
+    while (i < numRows) {
+      newArr(i).unsafeReplace(col, v(i))
+      i += 1
+    }
+    DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(newArr))
+  }
+
 }
 
 object DataFrame {
