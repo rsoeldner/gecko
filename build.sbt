@@ -7,16 +7,13 @@ val catsV = "1.0.0-MF"
 scalaVersion := "2.12.3"
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-resolvers += "amaizing at bintray" at "https://dl.bintray.com/amaizing/amaizing-saddle"
 
 libraryDependencies ++= Seq(
-  "com.github.ichoran" %% "thyme"           % "0.1.2-SNAPSHOT",
-  "org.typelevel"      %% "cats-core"       % catsV,
-  "io.github.amaizing" %% "amaizing-saddle" % "0.0.1",
-  "co.fs2"             %% "fs2-core"        % "0.10.0-M7",
-  "co.fs2"             %% "fs2-io"          % "0.10.0-M7",
-  "org.scalatest"      %% "scalatest"       % "3.0.4" % "test",
-  "org.scalacheck"     %% "scalacheck"      % "1.13.4" % "test"
+  "org.typelevel"  %% "cats-core"  % catsV,
+  "co.fs2"         %% "fs2-core"   % "0.10.0-M7",
+  "co.fs2"         %% "fs2-io"     % "0.10.0-M7",
+  "org.scalatest"  %% "scalatest"  % "3.0.4" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 )
 
 scalacOptions := Seq(
