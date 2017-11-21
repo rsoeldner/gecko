@@ -1,5 +1,6 @@
 .idea
 target
-project/
 full_df.csv
 *.sc
+project/project
+project/target
