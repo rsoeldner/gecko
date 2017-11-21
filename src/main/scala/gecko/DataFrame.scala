@@ -436,11 +436,11 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
 
 object DataFrame {
 
-  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag : EmptyPrint](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
-  )(implicit emptyPrint: EmptyPrint[A]) = new DataFrame[R, C, A](values, rowIx, colIx) {}
+  ): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {}
 
   def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
       arr: DataMatrix[A]

@@ -228,6 +228,11 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     */
   def unsafeLast: A = underlying(underlying.length - 1)
 
+  /** Filter values that match a predicate
+    *
+    * @param p predicate
+    * @return
+    */
   def filter(p: A => Boolean): DataVector[A] = {
     val buf = new ListBuffer[A]
     var i   = 0
@@ -241,9 +246,21 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     fromArray(buf.toArray)
   }
 
+  /** Zip with another DataVector
+    *
+    * @param other
+    * @tparam B
+    * @return
+    */
   def zip[B >: A: ClassTag](other: DataVector[B]): DataVector[(A, B)] =
     fromArray(underlying.zip(other.underlying))
 
+  /** TakeWhile value matches predicate
+    *
+    * @param p predicate
+    * @param ix starting index
+    * @return
+    */
   def takeWhile(p: A => Boolean, ix: Int = 0): DataVector[A] = {
     var i = ix
     while (i < length) {
@@ -383,10 +400,9 @@ object DataVector {
   def apply[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko](values: A*): DataVector[A] =
     fromArray[A](values.toArray)
 
-  def fromArray[@specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def fromArray[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko](
       array: Array[A]
-  )(implicit emptyGecko: EmptyGecko[A]): DataVector[A] =
-    new DataVector[A](array) {}
+  ): DataVector[A] = new DataVector[A](array) {}
 
   def empty[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko]: DataVector[A] = fromArray(Array.empty[A])
 
