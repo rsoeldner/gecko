@@ -320,12 +320,12 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     }
   }
 
-  /** GroupBy single column
+  /** yankDistinct single column
     *
     * @param c Column name
     * @return
     */
-  def groupBy_(c: C): Either[GeckoError, List[(A, DataFrame[Int, C, A])]] =
+  def yankDistinct_(c: C): Either[GeckoError, List[(A, DataFrame[Int, C, A])]] =
     colIx.findOne(c).map { idx =>
       val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
       var r    = 0
@@ -342,18 +342,18 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
       }.toList
     }
 
-  /** GroupBy list of dimensions
+  /** yankDistinct list of dimensions
     *
     * @param dim List of dimensions from left to right
     * @return
     */
-  def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
+  def yankDistinct(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
     val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
     dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
       case (list, dimension) =>
         for {
           listMap                         <- list
-          elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension).right.get
+          elem: (A, DataFrame[Int, C, A]) <- listMap._2.yankDistinct_(dimension).right.get
         } yield (listMap._1.updated(dimension, elem._1), elem._2)
     }
   }
