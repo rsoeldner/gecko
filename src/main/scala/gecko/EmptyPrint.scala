@@ -29,9 +29,8 @@ trait EmptyPrintInstances {
   implicit val emptyPrintString = new EmptyPrint[String] {
     val repr: String = ""
   }
-  implicit val emptyPrintAny = new EmptyPrint[Any] {
-    val repr: String = ""
-  }
 
-  implicit final def printGeckerino[A]: EmptyPrint[A] = emptyGeckoAny.asInstanceOf[EmptyPrint[A]]
+  implicit def emptyPrintProduct[A, B](implicit empty1: EmptyPrint[A], empty2: EmptyPrint[B]) = new EmptyPrint[(A, B)] {
+    val repr = s"(${empty1.repr}, ${empty2.repr}"
+  }
 }

@@ -34,8 +34,9 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
       elem = arr(i)
       if (empty1.nonEmpty(elem))
         newArray(i) = b(arr(i))
-      else
+      else {
         newArray(i) = empty2.emptyElement
+      }
       i += 1
     }
     newArray
@@ -130,7 +131,7 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
           Left(DataFrameInitError("Invalid length. DataVectors must all be of the same length"))
       }
 
-    def fromArrayWithDim[A: ClassTag](rows: Int, cols: Int, values: Array[A]): Either[GeckoError, DataMatrix[A]] = {
+    def fromArrayWithDim[A: ClassTag: EmptyGecko](rows: Int, cols: Int, values: Array[A]): Either[GeckoError, DataMatrix[A]] = {
       val n = rows * cols
       if (n != values.length)
         Left(DataFrameInitError(s"$rows * $cols != ${values.length}"))
@@ -151,27 +152,27 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
 
     /** Unsafe construct a DataMatrix from a single array baed on rows and cols
       *
-      * @param rows number of rows
-      * @param cols number of cols
+      * @param rows   number of rows
+      * @param cols   number of cols
       * @param values array of values
       * @tparam A
       * @return
       */
-    def unsafeFromArrayWithDim[A: ClassTag](rows: Int, cols: Int, values: Array[A]): DataMatrix[A] = {
+    def unsafeFromArrayWithDim[A: ClassTag: EmptyGecko](rows: Int, cols: Int, values: Array[A]): DataMatrix[A] = {
       val n = rows * cols
       val newArray = new Array[DataVector[A]](rows)
       var r = 0
       while (r < rows) {
-          val startPos = r * cols
-          val endPos = startPos + cols
-          newArray(r) = DataVector.fromArray(copyRange(values, startPos, endPos))
+        val startPos = r * cols
+        val endPos = startPos + cols
+        newArray(r) = DataVector.fromArray(copyRange(values, startPos, endPos))
 
-          r += 1
-        }
-        DataMatrix.unsafeFromArray(newArray)
+        r += 1
       }
+      DataMatrix.unsafeFromArray(newArray)
+    }
 
-      def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
+    def liftF[F[_], A](vectors: DataVector[A]*)(implicit F: MonadError[F, Throwable]): F[DataMatrix[A]] =
       if (vectors.size <= 0)
         F.raiseError(DataFrameInitError("No vectors"))
       else {
@@ -209,7 +210,7 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
 
     /** Fill DataMatrix with constant DataVector
       *
-      * @param n number of rows
+      * @param n    number of rows
       * @param elem row values
       * @tparam A
       * @return
@@ -229,10 +230,7 @@ package object gecko extends EmptyPrintInstances with EmptyGeckoInstances {
   }
 
   implicit class DataMatrixSyntax[A](val m: DataMatrix[A]) extends AnyVal {
-    def mapDM[B](f: DataVector[A] => DataVector[B]): DataMatrix[B] =
-      DataMatrix.is[B].coerce(mapCopyArray(m, f))
-
-    def transpose(implicit ct: ClassTag[A]): DataMatrix[A] = {
+    def transpose(implicit emptyGecko: EmptyGecko[A], ct: ClassTag[A]): DataMatrix[A] = {
       val nRows = m.head.length
       val newArray: Array[DataVector[A]] = new Array[DataVector[A]](nRows)
 

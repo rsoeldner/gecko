@@ -30,11 +30,15 @@ trait EmptyGeckoInstances {
     def nonEmpty(a: Boolean): Boolean = a
   }
 
-  implicit val emptyGeckoAny: EmptyGecko[Any] = new EmptyGecko[Any] {
-    val emptyElement: Any = null
+  implicit val geckoString: EmptyGecko[String] = new EmptyGecko[String] {
+    val emptyElement =""
 
-    def nonEmpty(a: Any): Boolean = a != null
+    def nonEmpty(a: String) = !a.isEmpty
   }
 
-  implicit final def emptyGeckerino[A]: EmptyGecko[A] = emptyGeckoAny.asInstanceOf[EmptyGecko[A]]
+  implicit final def productEmptyGeckerino[A, B](implicit empty1: EmptyGecko[A], empty2: EmptyGecko[B]): EmptyGecko[(A, B)] = new EmptyGecko[(A, B)] {
+    def nonEmpty(a: (A, B)): Boolean = empty1.nonEmpty(a._1) && empty2.nonEmpty(a._2)
+
+    val emptyElement: (A, B) = (empty1.emptyElement, empty2.emptyElement)
+  }
 }

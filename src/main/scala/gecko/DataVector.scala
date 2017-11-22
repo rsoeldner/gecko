@@ -48,7 +48,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @tparam B
     * @return
     */
-  def map[B: ClassTag](f: A => B): DataVector[B] = fromArray(mapCopyArray[A, B](underlying, f))
+  def map[B: ClassTag: EmptyGecko](f: A => B): DataVector[B] = fromArray(mapCopyArray[A, B](underlying, f))
 
   /** flatMap over each element
     *
@@ -56,7 +56,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @tparam B
     * @return
     */
-  def flatMap[B: ClassTag](f: A => DataVector[B]): DataVector[B] =
+  def flatMap[B: ClassTag: EmptyGecko](f: A => DataVector[B]): DataVector[B] =
     fromArray(flatMapCopy[A, B](underlying, f(_).underlying))
 
   /** semiFlatMap
@@ -65,11 +65,11 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @tparam B
     * @return
     */
-  def semiFlatMap[B: ClassTag](f: A => Array[B]): DataVector[B] = fromArray(flatMapCopy[A, B](underlying, f))
+  def semiFlatMap[B: ClassTag: EmptyGecko](f: A => Array[B]): DataVector[B] = fromArray(flatMapCopy[A, B](underlying, f))
 
   /** Replace value at specific index
     *
-    * @param i index
+    * @param i    index
     * @param elem new value
     * @return
     */
@@ -79,7 +79,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
 
   /** Unsafe version, replace value at specific index
     *
-    * @param i index
+    * @param i    index
     * @param elem new value
     * @return
     */
@@ -121,7 +121,7 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
   /** Append another datavector, which may be an upcast
     *
     */
-  def ++[B >: A: ClassTag](other: DataVector[B]): DataVector[B] =
+  def ++[B >: A: ClassTag: EmptyGecko](other: DataVector[B]): DataVector[B] =
     fromArray[B](arrayAppend[B](underlying.asInstanceOf[Array[B]], other.underlying))
 
   /** Drop value at specific index
@@ -252,12 +252,12 @@ sealed abstract class DataVector[@specialized(Int, Double, Boolean, Long) A: Cla
     * @tparam B
     * @return
     */
-  def zip[B >: A: ClassTag](other: DataVector[B]): DataVector[(A, B)] =
+  def zip[B >: A: ClassTag: EmptyGecko](other: DataVector[B]): DataVector[(A, B)] =
     fromArray(underlying.zip(other.underlying))
 
   /** TakeWhile value matches predicate
     *
-    * @param p predicate
+    * @param p  predicate
     * @param ix starting index
     * @return
     */
