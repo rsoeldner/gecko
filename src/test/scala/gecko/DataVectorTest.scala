@@ -13,16 +13,16 @@ class DataVectorTest extends TestSpec {
       vec.length should be > 0
 
       vec.underlying.length should be(vec.length)
-      vec should be(vec)
     }
   }
 
   it should "properly map" in {
     forAll { (vec: DataVector[Int]) =>
       val add1 = (v: Int) => v + 1
-      val res  = vec.map(add1)
+      val minus1 = (v: Int) => v - 1
+      val res  = vec.map(add1).map(minus1)
 
-      res.underlying should be(vec.underlying.map(_ + 1))
+      res.underlying should be(vec.underlying)
     }
   }
 

@@ -202,7 +202,8 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     val newValues = copyArray(values)
     var j         = 0
     while (j < rowIx.length) {
-      newValues(j) = newValues(j).unsafeReplace(i, f(newValues(j)(i)))
+      if(emptyGecko.nonEmpty(newValues(i)(j)))
+        newValues(j) = newValues(j).unsafeReplace(i, f(newValues(j)(i)))
       j += 1
     }
 
