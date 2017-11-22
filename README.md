@@ -6,7 +6,7 @@ We rely on
 
 | Name     | Version   |
 | ---      | ---       |
-| cats     | 1.0.0-MF  |
+| cats     | 1.0.0-RC1 |
 | fs2-core | 0.10.0-M7 |
 | fs2-io   | 0.10.0-M7 |
 

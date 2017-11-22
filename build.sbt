@@ -1,7 +1,7 @@
 
 lazy val deps = libraryDependencies := {
   val catsV       = "1.0.0-RC1"
-  val fs2V        = "0.10.0-M7"
+  val fs2V        = "0.10.0-M8"
   val scalaTestV  = "3.0.4"
   val scalaCheckV = "1.13.4"
 
