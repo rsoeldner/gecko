@@ -64,7 +64,10 @@ final case class FrameIndex[@specialized(Int, Double, Boolean, Long) A: ClassTag
     * @return
     */
   def dropIx(i: Int): Either[GeckoError, FrameIndex[A]] =
-    if (0 <= i && i < length) Right(unsafeDropIx(i))
+    if (0 <= i && i < length) {
+      if(length == 1) Right(FrameIndex.empty)
+      else Right(unsafeDropIx(i))
+    }
     else Left(IndexOutOfBoundError(i, length))
 
   /** Finds first occurrence

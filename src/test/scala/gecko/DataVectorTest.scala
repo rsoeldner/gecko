@@ -27,8 +27,8 @@ class DataVectorTest extends TestSpec {
   it should "properly at" in {
     forAll { (vec: DataVector[Int], i: Int) =>
       val res = vec.at(i)
-      if (0 <= i && i < vec.length) res shouldBe defined
-      else res should be(None)
+      if (0 <= i && i < vec.length && geckoInt.nonEmpty(vec.underlying(i))) res shouldBe defined
+      else res shouldBe None
     }
   }
 
