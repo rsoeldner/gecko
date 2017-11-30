@@ -153,13 +153,13 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   /** Apply F over all values in a dataframe
     *
     */
-  def mapValues(f: A => A): DataFrame[R, C, A] =
-    DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(mapCopyArray[DataVector[A], DataVector[A]](values, _.map(f))))
+  def mapValues(f: A => A): DataFrame[R, C, A] = ???
+    //DataMatrix.unsafeFromArray(mapCopyArray[DataVector[A], DataVector[A]](values, _.map(f))))
 
   /** Transpose the frame.
     */
-  def transpose: DataFrame[C, R, A] =
-    DataFrame(colIx, rowIx, values.transpose)
+  def transpose: DataFrame[C, R, A] = ???
+//    DataFrame(colIx, rowIx, values.transpose)
 
   /** Return specific column values as DataVector[A]
     *
@@ -202,7 +202,8 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     val newValues = copyArray(values)
     var j         = 0
     while (j < rowIx.length) {
-      newValues(j) = newValues(j).unsafeReplace(i, f(newValues(j)(i)))
+      if(emptyGecko.nonEmpty(newValues(i)(j)))
+        newValues(j) = newValues(j).unsafeReplace(i, f(newValues(j)(i)))
       j += 1
     }
 
@@ -319,12 +320,12 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
     }
   }
 
-  /** GroupBy single column
+  /** yankDistinct single column
     *
     * @param c Column name
     * @return
     */
-  def groupBy_(c: C): Either[GeckoError, List[(A, DataFrame[Int, C, A])]] =
+  def yankDistinct_(c: C): Either[GeckoError, List[(A, DataFrame[Int, C, A])]] =
     colIx.findOne(c).map { idx =>
       val book = new mutable.ListMap[A, mutable.ListBuffer[DataVector[A]]]()
       var r    = 0
@@ -341,18 +342,18 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
       }.toList
     }
 
-  /** GroupBy list of dimensions
+  /** yankDistinct list of dimensions
     *
     * @param dim List of dimensions from left to right
     * @return
     */
-  def groupBy(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
+  def yankDistinct(dim: List[C]): List[(Map[C, A], DataFrame[Int, C, A])] = {
     val thisFrame = DataFrame(FrameIndex.default(numRows), colIx, values)
     dim.foldLeft(List((Map.empty[C, A], thisFrame))) {
       case (list, dimension) =>
         for {
           listMap                         <- list
-          elem: (A, DataFrame[Int, C, A]) <- listMap._2.groupBy_(dimension).right.get
+          elem: (A, DataFrame[Int, C, A]) <- listMap._2.yankDistinct_(dimension).right.get
         } yield (listMap._1.updated(dimension, elem._1), elem._2)
     }
   }
@@ -383,17 +384,66 @@ sealed abstract class DataFrame[R, C, @specialized(Int, Double, Boolean, Long) A
   def concat(other: DataFrame[R, C, A]): Either[GeckoError, DataFrame[R, C, A]] =
     if (this.numCols == other.numCols && colIx == other.colIx) Right(unsafeConcat(other))
     else Left(InvalidArgumentError)
+
+  /** Replace row by v
+    *
+    * @param row index
+    * @param v new values
+    * @return
+    */
+  def replaceRow(row: Int, v: DataVector[A]): Either[GeckoError, DataFrame[R, C, A]] =
+    if (0 <= row && row < numRows && v.length == numCols) Right(unsafeReplaceRow(row, v))
+    else Left(InvalidArgumentError)
+
+  /** Unsafe version, replace row by v
+    *
+    * @param row index
+    * @param v new values
+    * @return
+    */
+  def unsafeReplaceRow(row: Int, v: DataVector[A]): DataFrame[R, C, A] = {
+    val newArr: Array[DataVector[A]] = values.clone()
+    newArr(row) = v
+    DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(newArr))
+  }
+
+  /** Replace column by v
+    *
+    * @param col index
+    * @param v new values
+    * @return
+    */
+  def replaceCol(col: Int, v: DataVector[A]): Either[GeckoError, DataFrame[R, C, A]] =
+    if (0 <= col && col < numCols && v.length == numRows) Right(unsafeReplaceCol(col, v))
+    else Left(InvalidArgumentError)
+
+  /** Unsafe version, replace column by v
+    *
+    * @param col index
+    * @param v new values
+    * @return
+    */
+  def unsafeReplaceCol(col: Int, v: DataVector[A]): DataFrame[R, C, A] = {
+    val newArr: Array[DataVector[A]] = values.clone()
+    var i                            = 0
+    while (i < numRows) {
+      newArr(i).unsafeReplace(col, v(i))
+      i += 1
+    }
+    DataFrame(rowIx, colIx, DataMatrix.unsafeFromArray(newArr))
+  }
+
 }
 
 object DataFrame {
 
-  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag](
+  def apply[R, C, @specialized(Int, Double, Boolean, Long) A: ClassTag : EmptyPrint: EmptyGecko](
       rowIx: FrameIndex[R],
       colIx: FrameIndex[C],
       values: DataMatrix[A]
-  )(implicit emptyPrint: EmptyPrint[A]) = new DataFrame[R, C, A](values, rowIx, colIx) {}
+  ): DataFrame[R, C, A] = new DataFrame[R, C, A](values, rowIx, colIx) {}
 
-  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint](
+  def default[@specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyPrint: EmptyGecko](
       arr: DataMatrix[A]
   ): DataFrame[Int, Int, A] =
     if (arr.isEmpty) {
@@ -404,7 +454,7 @@ object DataFrame {
       apply[Int, Int, A](rows, cols, arr)
     }
 
-  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag]: DataFrame[R, C, A] =
+  def empty[R: ClassTag, C: ClassTag, @specialized(Int, Double, Boolean, Long) A: ClassTag: EmptyGecko: EmptyPrint]: DataFrame[R, C, A] =
     DataFrame(FrameIndex.empty[R], FrameIndex.empty[C], DataMatrix.empty[A])
 
   def fill[A: ClassTag: EmptyGecko: EmptyPrint](n: Int, vector: DataVector[A]): DataFrame[Int, Int, A] =
