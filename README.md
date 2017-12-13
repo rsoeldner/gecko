@@ -1,5 +1,6 @@
 # gecko
 [![Build Status](https://travis-ci.org/rsoeldner/gecko.svg?branch=master)](https://travis-ci.org/rsoeldner/gecko)
+[![Download](https://api.bintray.com/packages/rsoeldner/gecko/gecko/images/download.svg?version=0.0.1) ](https://bintray.com/rsoeldner/gecko/gecko/0.0.1/link)
 
 array-backed and _predictable_ data manipulation library inspired by _saddle_ and _pandas_.
 
