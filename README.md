@@ -1,4 +1,6 @@
 # gecko
+[![Build Status](https://travis-ci.org/rsoeldner/gecko.svg?branch=master)](https://travis-ci.org/rsoeldner/gecko)
+
 array-backed and _predictable_ data manipulation library inspired by _saddle_ and _pandas_.
 
 ## dependency
