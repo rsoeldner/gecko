@@ -1,6 +1,6 @@
 # gecko
 [![Build Status](https://travis-ci.org/rsoeldner/gecko.svg?branch=master)](https://travis-ci.org/rsoeldner/gecko)
-[![Download](https://api.bintray.com/packages/rsoeldner/gecko/gecko/images/download.svg?version=0.0.1) ](https://bintray.com/rsoeldner/gecko/gecko/0.0.1/link)
+[![Download](https://api.bintray.com/packages/rsoeldner/gecko/gecko/images/download.svg?version=0.0.2) ](https://bintray.com/rsoeldner/gecko/gecko/0.0.2/link)
 
 array-backed and _predictable_ data manipulation library inspired by _saddle_ and _pandas_.
 
@@ -9,9 +9,9 @@ We rely on
 
 | Name     | Version   |
 | ---      | ---       |
-| cats     | 1.0.0-RC1 |
-| fs2-core | 0.10.0-M7 |
-| fs2-io   | 0.10.0-M7 |
+| cats     | 1.0.0-RC2 |
+| fs2-core | 0.10.0-M10 |
+| fs2-io   | 0.10.0-M10 |
 
 
 A `DataFrame` consists of a _row and column identifier_, specified by `FrameIndex` and a `DataMatrix` which consists of 
