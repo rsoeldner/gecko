@@ -1,7 +1,7 @@
 
 lazy val deps = libraryDependencies := {
-  val catsV       = "1.0.0-RC1"
-  val fs2V        = "0.10.0-M8"
+  val catsV       = "1.0.0-RC2"
+  val fs2V        = "0.10.0-M10"
   val scalaTestV  = "3.0.4"
   val scalaCheckV = "1.13.4"
 
@@ -54,7 +54,7 @@ lazy val gecko = Project(id = "gecko", base = file("."))
   .settings(
     organization in ThisBuild := "io.github.rsoeldner",
     scalaVersion in ThisBuild := "2.12.4",
-    version in ThisBuild := "0.0.1"
+    version in ThisBuild := "0.0.2"
   )
   .settings(scalaOpts)
   .settings(deps)
